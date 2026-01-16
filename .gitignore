@@ -1,0 +1,8 @@
+# gitignore
+# python
+
+helpers/
+video/
+.vscode
+
+generalTestFile.py
