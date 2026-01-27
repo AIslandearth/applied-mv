@@ -1,6 +1,6 @@
 import cv2
  
-cap = cv2.VideoCapture("sources/video/mov_video.MOV")
+cap = cv2.VideoCapture("sources/video/testVideo.MOV")
 
 while cap.isOpened():
     ret, frame = cap.read()
