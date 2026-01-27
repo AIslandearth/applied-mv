@@ -3,6 +3,7 @@
 
 helpers/
 video/
+img/
 .vscode
 
 generalTestFile.py
