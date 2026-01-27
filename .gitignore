@@ -1,9 +1,9 @@
 # gitignore
 # python
-.vscode
 
 helpers/
 video/
 img/
+img copy/
 
-generalTestFile.py
+.vscode
