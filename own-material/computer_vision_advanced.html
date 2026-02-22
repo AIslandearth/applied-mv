@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Computer Vision — Advanced Principles & Mathematics</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap');
+  /* Fallback if Cabinet Grotesk not available */
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono:wght@300;400;700&display=swap');
+
+  :root {
+    --bg: #06070d;
+    --surface: #0c0e1a;
+    --card: #111426;
+    --border: #1e2235;
+    --border2: #2a2f4a;
+    --cyan: #00d4ff;
+    --orange: #ff7b2e;
+    --pink: #ff3d9a;
+    --lime: #a3e635;
+    --purple: #8b5cf6;
+    --text: #dde1f0;
+    --muted: #5a6080;
+    --muted2: #3a3f5c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', 'Cabinet Grotesk', sans-serif;
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 60px 48px 48px;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 80% at 80% 20%, rgba(0,212,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(139,92,246,0.06) 0%, transparent 60%);
+  }
+
+  .hero-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--cyan);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 5vw, 4.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    max-width: 800px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(0,212,255,0.6);
+  }
+
+  .hero-sub {
+    margin-top: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    max-width: 600px;
+  }
+
+  .pill-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  .pill {
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid var(--border2);
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  /* ─── NAV ─── */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    background: rgba(6,7,13,0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+
+  .nav a {
+    display: block;
+    white-space: nowrap;
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    padding: 14px 16px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .nav a:hover { color: var(--text); border-bottom-color: var(--cyan); }
+
+  /* ─── LAYOUT ─── */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 64px 24px; }
+
+  /* ─── SECTION ─── */
+  .sec {
+    margin-bottom: 96px;
+    scroll-margin-top: 64px;
+  }
+
+  .sec-head {
+    margin-bottom: 36px;
+  }
+
+  .sec-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--cyan);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    opacity: 0.75;
+  }
+
+  .sec h2 {
+    font-size: clamp(1.6rem, 3vw, 2.6rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .sec h2 .accent { color: var(--cyan); }
+  .sec h2 .accent2 { color: var(--orange); }
+  .sec h2 .accent3 { color: var(--lime); }
+  .sec h2 .accent4 { color: var(--pink); }
+  .sec h2 .accent5 { color: var(--purple); }
+
+  .sec-desc {
+    margin-top: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    max-width: 640px;
+  }
+
+  /* ─── ANALOGY ─── */
+  .analogy {
+    padding: 18px 22px;
+    background: rgba(255,123,46,0.05);
+    border: 1px solid rgba(255,123,46,0.2);
+    border-left: 3px solid var(--orange);
+    border-radius: 6px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    color: #c8cde0;
+  }
+
+  .analogy strong { color: var(--orange); }
+  .analogy .al-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+    opacity: 0.75;
+  }
+
+  /* ─── MATH ─── */
+  .math {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 22px 26px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+
+  .math-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--purple);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 12px;
+    opacity: 0.75;
+  }
+
+  .math-f {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    color: var(--cyan);
+    line-height: 2;
+    white-space: pre;
+  }
+
+  .math-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.7;
+  }
+
+  /* ─── CODE ─── */
+  .code {
+    background: #07080f;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+
+  .code-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .code-bar .filename { color: var(--text); }
+  .code-bar .lang { color: var(--lime); }
+
+  pre {
+    padding: 22px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.75;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .kw  { color: #c792ea; }
+  .fn  { color: var(--cyan); }
+  .cm  { color: var(--muted); font-style: italic; }
+  .st  { color: var(--lime); }
+  .nm  { color: var(--orange); }
+  .op  { color: var(--pink); }
+  .tp  { color: #ffd580; }
+
+  /* ─── GRID CARDS ─── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin: 24px 0;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .card-icon { font-size: 1.4rem; margin-bottom: 10px; }
+  .card h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 6px; }
+  .card p { font-size: 0.78rem; color: var(--muted); line-height: 1.6; }
+
+  /* ─── MATRIX ─── */
+  .matrix-wrap {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 20px 0;
+  }
+
+  .matrix {
+    display: inline-grid;
+    border: 1px solid var(--border2);
+    border-radius: 4px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--surface);
+  }
+
+  .m2 { grid-template-columns: repeat(2, 72px); }
+  .m3 { grid-template-columns: repeat(3, 64px); }
+  .m33 { grid-template-columns: repeat(3, 56px); }
+
+  .mc {
+    padding: 12px 10px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    line-height: 1.3;
+  }
+
+  .mc.c { color: var(--cyan); background: rgba(0,212,255,0.06); }
+  .mc.o { color: var(--orange); background: rgba(255,123,46,0.06); }
+  .mc.p { color: var(--purple); background: rgba(139,92,246,0.08); }
+  .mc.l { color: var(--lime); background: rgba(163,230,53,0.06); }
+  .mc.d { color: var(--muted); background: transparent; }
+  .mc.k { color: var(--pink); background: rgba(255,61,154,0.07); }
+  .mc sub { font-size: 0.6rem; }
+
+  .matrix-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  /* ─── TABLE ─── */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 0.82rem;
+  }
+
+  .tbl th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cyan);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border2);
+    background: var(--surface);
+    text-align: left;
+  }
+
+  .tbl td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30,34,53,0.8);
+    vertical-align: top;
+    color: #c0c5d8;
+    font-size: 0.8rem;
+  }
+
+  .tbl tr:hover td { background: rgba(0,212,255,0.02); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.63rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .bc { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid rgba(0,212,255,0.2); }
+  .bo { background: rgba(255,123,46,0.1); color: var(--orange); border: 1px solid rgba(255,123,46,0.2); }
+  .bp { background: rgba(139,92,246,0.1); color: var(--purple); border: 1px solid rgba(139,92,246,0.2); }
+  .bl { background: rgba(163,230,53,0.1); color: var(--lime); border: 1px solid rgba(163,230,53,0.2); }
+  .bk { background: rgba(255,61,154,0.1); color: var(--pink); border: 1px solid rgba(255,61,154,0.2); }
+
+  /* ─── PIPELINE FLOW ─── */
+  .flow {
+    display: flex;
+    gap: 0;
+    margin: 20px 0;
+    flex-wrap: wrap;
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .flow-step {
+    flex: 1;
+    min-width: 100px;
+    padding: 16px 14px;
+    background: var(--card);
+    text-align: center;
+    position: relative;
+    border-right: 1px solid var(--border2);
+  }
+
+  .flow-step:last-child { border-right: none; }
+
+  .flow-step::after {
+    content: '▶';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    color: var(--cyan);
+    z-index: 2;
+    background: var(--border2);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 18px;
+  }
+
+  .flow-step:last-child::after { display: none; }
+
+  .flow-step .fn { font-size: 0.65rem; color: var(--cyan); font-family: 'JetBrains Mono', monospace; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .flow-step h5 { font-size: 0.78rem; font-weight: 700; margin-bottom: 3px; }
+  .flow-step p { font-size: 0.68rem; color: var(--muted); }
+
+  /* ─── DIVIDER ─── */
+  .div { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  p { margin-bottom: 12px; color: #b8bdcf; font-size: 0.9rem; }
+  strong { color: var(--text); }
+
+  /* ─── CANVAS VIS ─── */
+  .vis-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 20px;
+    margin: 20px 0;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .vis-item { text-align: center; }
+
+  canvas {
+    display: block;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .vis-lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    margin-top: 6px;
+    text-align: center;
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    text-align: center;
+    padding: 40px;
+    border-top: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--muted2);
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 40px 20px 36px; }
+    .wrap { padding: 40px 16px; }
+    .flow { flex-direction: column; }
+    .flow-step { border-right: none; border-bottom: 1px solid var(--border2); }
+    .flow-step::after { right: 50%; top: auto; bottom: -10px; transform: translateX(50%) rotate(90deg); }
+    .matrix-wrap { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ════════════════ HERO ════════════════ -->
+<header class="hero">
+  <div class="hero-eyebrow">// Part 2 — Beyond Edge Detection</div>
+  <h1>Computer Vision<br><em>Principles</em> & Mathematics</h1>
+  <p class="hero-sub">// Feature detection · Optical flow · Camera geometry · Colour spaces · Fourier · Contours · Hough · Homography · Keypoints · Stereo · CNN basics</p>
+  <div class="pill-row">
+    <span class="pill">opencv-python</span>
+    <span class="pill">linear-algebra</span>
+    <span class="pill">geometry</span>
+    <span class="pill">signal-processing</span>
+    <span class="pill">deep-learning</span>
+  </div>
+</header>
+
+<nav class="nav">
+  <a href="#colour">Colour Spaces</a>
+  <a href="#fourier">Fourier</a>
+  <a href="#hough">Hough Transform</a>
+  <a href="#contours">Contours</a>
+  <a href="#keypoints">Keypoints / SIFT</a>
+  <a href="#homography">Homography</a>
+  <a href="#optflow">Optical Flow</a>
+  <a href="#camera">Camera Geometry</a>
+  <a href="#stereo">Stereo / Depth</a>
+  <a href="#cnn">CNN Basics</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ════════════════════════════════════════
+     1. COLOUR SPACES
+════════════════════════════════════════ -->
+<section class="sec" id="colour">
+  <div class="sec-head">
+    <div class="sec-label">01 · Colour Spaces</div>
+    <h2>Colour Space <span class="accent">Transformations</span></h2>
+    <p class="sec-desc">// Why RGB is not always the right way to represent colour</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    RGB is like describing a person by their exact bone structure — precise but fragile. Change the lighting and all three numbers change drastically, even though the person looks the same. <strong>HSV</strong> is like describing them as "tall, wearing a red jacket, standing in shadows" — hue (colour identity) stays the same even when brightness changes. This is why HSV is used for colour-based object tracking.
+  </div>
+
+  <p>Different tasks need different colour spaces. <strong>RGB</strong> mixes colour and brightness. <strong>HSV/HSL</strong> separates them. <strong>LAB</strong> mimics human perception. <strong>YCrCb</strong> is used in video/compression (separates luma from chroma).</p>
+
+  <div class="math">
+    <div class="math-label">// RGB → HSV conversion</div>
+    <div class="math-f">Let R,G,B ∈ [0,1]
+V = max(R,G,B)
+S = (V - min(R,G,B)) / V           (if V ≠ 0)
+
+H = 60 × (G - B)/(V - min)         if V = R
+H = 60 × (B - R)/(V - min) + 120   if V = G
+H = 60 × (R - G)/(V - min) + 240   if V = B
+H = H + 360                         if H < 0</div>
+    <div class="math-note">
+      H = Hue [0°–360°] — the colour wheel angle<br>
+      S = Saturation [0–1] — how "vivid" vs grey<br>
+      V = Value [0–1] — brightness<br>
+      OpenCV stores H/2 (0–180), S×255, V×255 in uint8
+    </div>
+  </div>
+
+  <div class="math">
+    <div class="math-label">// RGB → CIE LAB (perceptually uniform)</div>
+    <div class="math-f">Step 1: RGB → XYZ (via linear transform + gamma)
+Step 2: XYZ normalised by D65 white point (Xn,Yn,Zn)
+Step 3: f(t) = t^(1/3)  if t > 0.008856
+         f(t) = 7.787t + 16/116  otherwise
+
+L* = 116·f(Y/Yn) - 16        (lightness, 0–100)
+a* = 500·(f(X/Xn) - f(Y/Yn)) (green↔red axis)
+b* = 200·(f(Y/Yn) - f(Z/Zn)) (blue↔yellow axis)</div>
+    <div class="math-note">
+      LAB: equal Euclidean distances = equal perceived colour differences.<br>
+      Perceptual colour distance: ΔE = √(ΔL² + Δa² + Δb²)<br>
+      Very useful for comparing colours the way humans see them.
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">colour_spaces.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img = cv2.<span class="fn">imread</span>(<span class="st">'image.jpg'</span>)
+
+<span class="cm"># ── Conversions ──────────────────────────────</span>
+hsv   = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2HSV)
+lab   = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2LAB)
+gray  = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2GRAY)
+ycrcb = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2YCrCb)
+hls   = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2HLS)
+
+<span class="cm"># ── HSV colour masking (track orange object) ──</span>
+<span class="cm"># OpenCV H range = 0-180, S/V = 0-255</span>
+lower_orange = np.<span class="fn">array</span>([<span class="nm">10</span>, <span class="nm">100</span>, <span class="nm">100</span>])
+upper_orange = np.<span class="fn">array</span>([<span class="nm">25</span>, <span class="nm">255</span>, <span class="nm">255</span>])
+mask = cv2.<span class="fn">inRange</span>(hsv, lower_orange, upper_orange)
+result = cv2.<span class="fn">bitwise_and</span>(img, img, mask=mask)
+
+<span class="cm"># ── Skin detection in YCrCb ──────────────────</span>
+<span class="cm"># Skin tone falls in narrow Cr/Cb range regardless of brightness</span>
+lower_skin = np.<span class="fn">array</span>([<span class="nm">0</span>,  <span class="nm">133</span>, <span class="nm">77</span>], dtype=np.uint8)
+upper_skin = np.<span class="fn">array</span>([<span class="nm">255</span>, <span class="nm">173</span>, <span class="nm">127</span>], dtype=np.uint8)
+skin_mask = cv2.<span class="fn">inRange</span>(ycrcb, lower_skin, upper_skin)
+
+<span class="cm"># ── Perceptual colour distance (LAB) ─────────</span>
+colour1 = np.<span class="fn">array</span>([[[<span class="nm">255</span>, <span class="nm">100</span>, <span class="nm">50</span>]]], dtype=np.uint8)
+colour2 = np.<span class="fn">array</span>([[[<span class="nm">240</span>, <span class="nm">110</span>, <span class="nm">60</span>]]], dtype=np.uint8)
+lab1 = cv2.<span class="fn">cvtColor</span>(colour1, cv2.COLOR_BGR2LAB)[<span class="nm">0</span>,<span class="nm">0</span>].astype(float)
+lab2 = cv2.<span class="fn">cvtColor</span>(colour2, cv2.COLOR_BGR2LAB)[<span class="nm">0</span>,<span class="nm">0</span>].astype(float)
+delta_e = np.<span class="fn">sqrt</span>(np.<span class="fn">sum</span>((lab1 - lab2)**<span class="nm">2</span>))
+<span class="fn">print</span>(<span class="fn">f</span><span class="st">"ΔE perceptual distance: {delta_e:.2f}"</span>)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     2. FOURIER TRANSFORM
+════════════════════════════════════════ -->
+<section class="sec" id="fourier">
+  <div class="sec-head">
+    <div class="sec-label">02 · Frequency Domain</div>
+    <h2>Fourier <span class="accent2">Transform</span></h2>
+    <p class="sec-desc">// Decomposing images into sine waves</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    A song is just air pressure over time. But you can view it as a <strong>spectrum</strong> in a music equaliser — seeing which frequencies are loud (bass, treble). The Fourier Transform does the same for images: it shows which <strong>spatial frequencies</strong> are present. Low frequencies = gradual brightness changes (backgrounds). High frequencies = sharp edges, fine texture, noise. You can then <strong>filter frequencies</strong> before converting back — like tweaking the EQ.
+  </div>
+
+  <div class="math">
+    <div class="math-label">// 2D Discrete Fourier Transform (DFT)</div>
+    <div class="math-f">F(u, v) = Σₓ Σᵧ f(x,y) · e^(-j2π(ux/M + vy/N))
+
+Power Spectrum: |F(u,v)|² = Re(F)² + Im(F)²
+
+Inverse DFT (reconstruct image):
+f(x,y) = (1/MN) Σᵤ Σᵥ F(u,v) · e^(j2π(ux/M + vy/N))</div>
+    <div class="math-note">
+      u,v = frequency coordinates &nbsp;|&nbsp; x,y = spatial coordinates<br>
+      M,N = image dimensions &nbsp;|&nbsp; j = √(-1) (imaginary unit)<br>
+      Centre of spectrum = DC component (average brightness) = lowest freq<br>
+      Corners = highest spatial frequencies (fine detail, noise)
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🔇</div>
+      <h4>Low-pass filter</h4>
+      <p>Keep only low-frequency components (small circle in centre of spectrum). Result: blurred image. Removes noise and fine detail. Equivalent to Gaussian blur.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔔</div>
+      <h4>High-pass filter</h4>
+      <p>Remove low frequencies, keep high. Result: edges and textures highlighted, background removed. Used for sharpening and texture analysis.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🎚️</div>
+      <h4>Band-pass filter</h4>
+      <p>Keep only a ring of frequencies. Useful for finding periodic patterns, removing specific noise (e.g. moire patterns from scanned images).</p>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">fourier_filtering.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img = cv2.<span class="fn">imread</span>(<span class="st">'image.jpg'</span>, cv2.IMREAD_GRAYSCALE)
+
+<span class="cm"># ── Forward DFT ──────────────────────────────────</span>
+dft = np.fft.<span class="fn">fft2</span>(img)                  <span class="cm"># complex 2D array</span>
+dft_shifted = np.fft.<span class="fn">fftshift</span>(dft)     <span class="cm"># move DC to centre</span>
+
+<span class="cm"># Visualise as log magnitude spectrum</span>
+magnitude = np.<span class="fn">abs</span>(dft_shifted)
+log_spectrum = <span class="nm">20</span> * np.<span class="fn">log10</span>(magnitude + <span class="nm">1</span>)
+spectrum_vis = cv2.<span class="fn">normalize</span>(log_spectrum, <span class="kw">None</span>, <span class="nm">0</span>, <span class="nm">255</span>,
+                               cv2.NORM_MINMAX, cv2.CV_8U)
+
+<span class="cm"># ── Low-pass filter (blur in frequency domain) ───</span>
+rows, cols = img.shape
+crow, ccol = rows // <span class="nm">2</span>, cols // <span class="nm">2</span>
+radius = <span class="nm">30</span>  <span class="cm"># pixels — larger = less blur</span>
+
+mask = np.<span class="fn">zeros</span>((rows, cols), np.uint8)
+cv2.<span class="fn">circle</span>(mask, (ccol, crow), radius, <span class="nm">1</span>, <span class="op">-1</span>)  <span class="cm"># circular window</span>
+
+<span class="cm"># Apply mask → inverse DFT → reconstruct image</span>
+filtered_dft = dft_shifted * mask
+idft_shifted  = np.fft.<span class="fn">ifftshift</span>(filtered_dft)
+img_back = np.<span class="fn">abs</span>(np.fft.<span class="fn">ifft2</span>(idft_shifted))
+img_back = np.<span class="fn">uint8</span>(np.<span class="fn">clip</span>(img_back, <span class="nm">0</span>, <span class="nm">255</span>))
+
+<span class="cm"># ── High-pass filter ──────────────────────────────</span>
+hp_mask = <span class="nm">1</span> - mask   <span class="cm"># invert: keep edges not centre</span>
+hp_fft = dft_shifted * hp_mask
+hp_back = np.<span class="fn">abs</span>(np.fft.<span class="fn">ifft2</span>(np.fft.<span class="fn">ifftshift</span>(hp_fft)))
+hp_back = cv2.<span class="fn">normalize</span>(hp_back, <span class="kw">None</span>, <span class="nm">0</span>, <span class="nm">255</span>, cv2.NORM_MINMAX, cv2.CV_8U)
+
+<span class="cm"># OpenCV also has dft: slightly faster for large images</span>
+dft_cv = cv2.<span class="fn">dft</span>(np.float32(img), flags=cv2.DFT_COMPLEX_OUTPUT)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     3. HOUGH TRANSFORM
+════════════════════════════════════════ -->
+<section class="sec" id="hough">
+  <div class="sec-head">
+    <div class="sec-label">03 · Shape Detection</div>
+    <h2>Hough <span class="accent3">Transform</span></h2>
+    <p class="sec-desc">// Detecting lines, circles, and arbitrary shapes by voting</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    You have many dots on a piece of paper and want to find which line passes through the most dots. Instead of testing every possible line, the <strong>Hough Transform</strong> inverts the problem: each dot votes for all possible lines it could be on. Lines that get the most votes probably exist. It's like an election — if many people independently "vote" for the same candidate, that candidate is real.
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Hough Line Transform — Normal form</div>
+    <div class="math-f">ρ = x·cos(θ) + y·sin(θ)
+
+ρ = perpendicular distance from origin to line
+θ = angle of the perpendicular (0° to 180°)
+
+For each edge pixel (x,y):
+  for each θ in [0°, 180°]:
+    ρ = x·cos(θ) + y·sin(θ)
+    accumulator[ρ][θ] += 1    ← VOTE!
+
+Peak in accumulator = detected line</div>
+    <div class="math-note">
+      (ρ,θ) = Hough parameter space (accumulator array)<br>
+      Traditional (y=mx+b) fails for vertical lines (m=∞). Normal form avoids this.<br>
+      Probabilistic Hough (HoughLinesP) is faster — samples random edge subsets.
+    </div>
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Hough Circle Transform</div>
+    <div class="math-f">Circle: (x - a)² + (y - b)² = r²
+
+For each edge pixel (x,y) and each radius r:
+  for each angle θ in [0°, 360°]:
+    a = x - r·cos(θ)
+    b = y - r·sin(θ)
+    accumulator[a][b][r] += 1
+
+Peak at (a,b,r) = circle centre at (a,b) with radius r</div>
+    <div class="math-note">
+      Computationally heavy (3D accumulator). OpenCV uses gradient-based method (faster).<br>
+      param1 = Canny high threshold used internally<br>
+      param2 = accumulator threshold (higher = fewer, more certain circles)
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">hough_detection.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img   = cv2.<span class="fn">imread</span>(<span class="st">'image.jpg'</span>)
+gray  = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2GRAY)
+edges = cv2.<span class="fn">Canny</span>(gray, <span class="nm">50</span>, <span class="nm">150</span>)
+
+<span class="cm"># ── Line detection (probabilistic Hough) ─────────</span>
+<span class="cm"># rho=1px resolution, theta=1° resolution</span>
+<span class="cm"># threshold=100: minimum votes to be a line</span>
+<span class="cm"># minLineLength=50: discard lines shorter than 50px</span>
+<span class="cm"># maxLineGap=10: max gap to connect into one line</span>
+lines = cv2.<span class="fn">HoughLinesP</span>(edges,
+    rho=<span class="nm">1</span>, theta=np.pi/<span class="nm">180</span>,
+    threshold=<span class="nm">100</span>, minLineLength=<span class="nm">50</span>, maxLineGap=<span class="nm">10</span>)
+
+<span class="kw">if</span> lines <span class="kw">is not None</span>:
+    <span class="kw">for</span> line <span class="kw">in</span> lines:
+        x1, y1, x2, y2 = line[<span class="nm">0</span>]
+        cv2.<span class="fn">line</span>(img, (x1,y1), (x2,y2), (<span class="nm">0</span>,<span class="nm">255</span>,<span class="nm">0</span>), <span class="nm">2</span>)
+
+<span class="cm"># ── Circle detection ──────────────────────────────</span>
+<span class="cm"># Uses gradient information, not raw edge image</span>
+<span class="cm"># dp=1: accumulator resolution = image resolution</span>
+<span class="cm"># minDist=30: min distance between circle centres</span>
+<span class="cm"># param1=50: Canny high threshold</span>
+<span class="cm"># param2=30: accumulator threshold (lower = more circles)</span>
+<span class="cm"># minRadius/maxRadius: constrain circle size</span>
+circles = cv2.<span class="fn">HoughCircles</span>(gray,
+    cv2.HOUGH_GRADIENT, dp=<span class="nm">1</span>, minDist=<span class="nm">30</span>,
+    param1=<span class="nm">50</span>, param2=<span class="nm">30</span>,
+    minRadius=<span class="nm">10</span>, maxRadius=<span class="nm">100</span>)
+
+<span class="kw">if</span> circles <span class="kw">is not None</span>:
+    circles = np.<span class="fn">round</span>(circles[<span class="nm">0</span>]).astype(int)
+    <span class="kw">for</span> (cx, cy, r) <span class="kw">in</span> circles:
+        cv2.<span class="fn">circle</span>(img, (cx, cy), r, (<span class="nm">0</span>,<span class="nm">255</span>,<span class="nm">0</span>), <span class="nm">2</span>)
+        cv2.<span class="fn">circle</span>(img, (cx, cy), <span class="nm">2</span>, (<span class="nm">0</span>,<span class="nm">0</span>,<span class="nm">255</span>), <span class="nm">3</span>)  <span class="cm"># centre</span></pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     4. CONTOURS
+════════════════════════════════════════ -->
+<section class="sec" id="contours">
+  <div class="sec-head">
+    <div class="sec-label">04 · Shape Analysis</div>
+    <h2>Contours &amp; <span class="accent4">Shape Descriptors</span></h2>
+    <p class="sec-desc">// Finding, measuring and classifying shapes mathematically</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    Imagine painting the outline of your hand on paper. That outline is a <strong>contour</strong>. Now you can measure: how large is the area? how long is the perimeter? how round vs spiky is it? OpenCV contours are lists of boundary points, and from them you can compute a full mathematical "fingerprint" of any shape — area, perimeter, convexity, orientation, aspect ratio.
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Contour Descriptors</div>
+    <div class="math-f">Area (shoelace formula):
+A = ½|Σᵢ(xᵢ·yᵢ₊₁ - xᵢ₊₁·yᵢ)|
+
+Circularity (1.0 = perfect circle):
+C = 4π·Area / Perimeter²
+
+Aspect Ratio (bounding box):
+AR = width / height
+
+Extent (object fills how much of its bounding box):
+E = Area / (bounding_box_width × height)
+
+Solidity (convex hull fill ratio):
+S = Area / Convex_Hull_Area</div>
+    <div class="math-note">
+      Hu Moments: 7 invariant values derived from image moments.<br>
+      Invariant to scale, translation, and rotation — unique shape fingerprint.<br>
+      mu(p,q) = Σ Σ (x-x̄)ᵖ(y-ȳ)ᵍ·I(x,y)  [central moments]
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">contours_shape.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img = cv2.<span class="fn">imread</span>(<span class="st">'shapes.jpg'</span>)
+gray = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2GRAY)
+_, thresh = cv2.<span class="fn">threshold</span>(gray, <span class="nm">127</span>, <span class="nm">255</span>, cv2.THRESH_BINARY)
+
+<span class="cm"># Find contours</span>
+<span class="cm"># RETR_EXTERNAL: only outermost contours</span>
+<span class="cm"># RETR_TREE: full hierarchy (nested shapes)</span>
+<span class="cm"># CHAIN_APPROX_SIMPLE: compress horizontal/vertical runs</span>
+contours, hierarchy = cv2.<span class="fn">findContours</span>(thresh,
+    cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+<span class="kw">for</span> cnt <span class="kw">in</span> contours:
+    area = cv2.<span class="fn">contourArea</span>(cnt)
+    <span class="kw">if</span> area &lt; <span class="nm">500</span>: <span class="kw">continue</span>  <span class="cm"># skip tiny noise</span>
+
+    perimeter = cv2.<span class="fn">arcLength</span>(cnt, closed=<span class="kw">True</span>)
+    circularity = (<span class="nm">4</span> * np.pi * area) / (perimeter**<span class="nm">2</span>)
+
+    <span class="cm"># Bounding boxes</span>
+    x, y, w, h = cv2.<span class="fn">boundingRect</span>(cnt)
+    rect = cv2.<span class="fn">minAreaRect</span>(cnt)   <span class="cm"># rotated bounding rect</span>
+    (cx,cy), radius = cv2.<span class="fn">minEnclosingCircle</span>(cnt)
+
+    <span class="cm"># Approximate polygon (reduce vertices)</span>
+    <span class="cm"># epsilon = 2% of perimeter = tolerance</span>
+    epsilon = <span class="nm">0.02</span> * perimeter
+    approx = cv2.<span class="fn">approxPolyDP</span>(cnt, epsilon, closed=<span class="kw">True</span>)
+
+    <span class="cm"># Classify by vertex count</span>
+    n = <span class="fn">len</span>(approx)
+    shape = {<span class="nm">3</span>:<span class="st">"triangle"</span>, <span class="nm">4</span>:<span class="st">"rectangle"</span>,
+             <span class="nm">5</span>:<span class="st">"pentagon"</span>}.<span class="fn">get</span>(n, <span class="st">"circle"</span> <span class="kw">if</span> circularity &gt; <span class="nm">0.8</span> <span class="kw">else</span> <span class="st">"polygon"</span>)
+
+    <span class="cm"># Moments: centre of mass, area, orientation</span>
+    M = cv2.<span class="fn">moments</span>(cnt)
+    cx = <span class="fn">int</span>(M[<span class="st">'m10'</span>] / M[<span class="st">'m00'</span>])  <span class="cm"># centroid x</span>
+    cy = <span class="fn">int</span>(M[<span class="st">'m01'</span>] / M[<span class="st">'m00'</span>])  <span class="cm"># centroid y</span>
+
+    <span class="cm"># Hu Moments: rotation/scale/translation invariant</span>
+    hu = cv2.<span class="fn">HuMoments</span>(M).flatten()
+    <span class="fn">print</span>(<span class="fn">f</span><span class="st">"{shape}: circularity={circularity:.2f}, hu[0]={hu[0]:.4e}"</span>)
+
+    cv2.<span class="fn">drawContours</span>(img, [approx], <span class="op">-1</span>, (<span class="nm">0</span>,<span class="nm">255</span>,<span class="nm">0</span>), <span class="nm">2</span>)
+    cv2.<span class="fn">putText</span>(img, shape, (cx-<span class="nm">20</span>,cy), cv2.FONT_HERSHEY_SIMPLEX,
+                <span class="nm">0.5</span>, (<span class="nm">255</span>,<span class="nm">255</span>,<span class="nm">0</span>), <span class="nm">1</span>)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     5. KEYPOINTS / SIFT / ORB
+════════════════════════════════════════ -->
+<section class="sec" id="keypoints">
+  <div class="sec-head">
+    <div class="sec-label">05 · Feature Detection</div>
+    <h2>Keypoints, <span class="accent">SIFT</span> &amp; <span class="accent3">ORB</span></h2>
+    <p class="sec-desc">// Finding and matching distinctive points across images</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    When you look at a photo of a cathedral and try to recognise it in another photo (rotated, zoomed, partial), you instinctively look for <strong>distinctive landmarks</strong> — the pointed tower tip, the rose window, the arched doorway. <strong>Keypoint detectors</strong> find the visual equivalent: corners, blobs, and unique texture patches that are recognisable from many angles and scales. Each keypoint gets a <strong>descriptor vector</strong> — a numeric fingerprint — used for matching.
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <span class="fn">detect</span>
+      <h5>Keypoint Detection</h5>
+      <p>Find stable, distinctive points (corners, blobs)</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">describe</span>
+      <h5>Descriptor Extraction</h5>
+      <p>Compute 128-D (SIFT) or 256-bit (ORB) vector per point</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">match</span>
+      <h5>Descriptor Matching</h5>
+      <p>Find nearest neighbours in descriptor space</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">filter</span>
+      <h5>RANSAC / Ratio Test</h5>
+      <p>Remove outliers, keep reliable matches</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">estimate</span>
+      <h5>Homography</h5>
+      <p>Compute geometric transform between images</p>
+    </div>
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Harris Corner Detector — the foundation</div>
+    <div class="math-f">Response: R = det(M) - k·trace(M)²
+
+M = Σ w(x,y) · [Iₓ²    IₓIᵧ ]
+                [IₓIᵧ   Iᵧ²  ]
+
+det(M)   = λ₁·λ₂        (product of eigenvalues)
+trace(M) = λ₁ + λ₂      (sum of eigenvalues)
+
+R >> 0  → corner (both λ large)
+R << 0  → edge (one λ large)
+|R| ≈ 0 → flat region (both λ small)</div>
+    <div class="math-note">
+      k ≈ 0.04–0.06 (empirical constant)<br>
+      Iₓ, Iᵧ = image gradients (Sobel x and y)<br>
+      SIFT builds on this: uses Difference-of-Gaussians (DoG) to find keypoints at multiple scales
+    </div>
+  </div>
+
+  <div class="math">
+    <div class="math-label">// SIFT Descriptor (simplified)</div>
+    <div class="math-f">For each keypoint:
+1. Compute dominant orientation from gradient histogram
+2. Rotate neighbourhood to canonical orientation
+3. Divide 16×16 region into 4×4 sub-cells
+4. Compute 8-bin gradient histogram per sub-cell
+5. Concatenate: 4×4×8 = 128-dimensional vector
+6. Normalise vector to unit length (lighting invariant)</div>
+    <div class="math-note">
+      SIFT: Scale Invariant Feature Transform. Robust to scale, rotation, illumination.<br>
+      ORB: Oriented FAST + Rotated BRIEF. 100× faster than SIFT, binary descriptor (XOR matching).<br>
+      Matching distance: Euclidean (SIFT) or Hamming (ORB binary)
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">keypoint_matching.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img1 = cv2.<span class="fn">imread</span>(<span class="st">'photo1.jpg'</span>, cv2.IMREAD_GRAYSCALE)
+img2 = cv2.<span class="fn">imread</span>(<span class="st">'photo2.jpg'</span>, cv2.IMREAD_GRAYSCALE)
+
+<span class="cm"># ── ORB (free, fast, good for real-time) ─────────</span>
+orb = cv2.ORB_<span class="fn">create</span>(nfeatures=<span class="nm">500</span>)
+kp1, des1 = orb.<span class="fn">detectAndCompute</span>(img1, <span class="kw">None</span>)
+kp2, des2 = orb.<span class="fn">detectAndCompute</span>(img2, <span class="kw">None</span>)
+
+<span class="cm"># Brute-force matcher with Hamming distance (for binary)</span>
+bf = cv2.<span class="fn">BFMatcher</span>(cv2.NORM_HAMMING, crossCheck=<span class="kw">True</span>)
+matches = bf.<span class="fn">match</span>(des1, des2)
+matches = <span class="fn">sorted</span>(matches, key=<span class="kw">lambda</span> x: x.distance)
+
+<span class="cm"># Draw top 30 matches</span>
+result = cv2.<span class="fn">drawMatches</span>(img1, kp1, img2, kp2,
+                          matches[:<span class="nm">30</span>], <span class="kw">None</span>,
+                          flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+
+<span class="cm"># ── SIFT (more accurate, requires opencv-contrib) ─</span>
+<span class="kw">try</span>:
+    sift = cv2.SIFT_<span class="fn">create</span>()
+    kp1s, des1s = sift.<span class="fn">detectAndCompute</span>(img1, <span class="kw">None</span>)
+    kp2s, des2s = sift.<span class="fn">detectAndCompute</span>(img2, <span class="kw">None</span>)
+
+    <span class="cm"># KNN match + Lowe's ratio test</span>
+    bf2 = cv2.<span class="fn">BFMatcher</span>(cv2.NORM_L2)
+    knn_matches = bf2.<span class="fn">knnMatch</span>(des1s, des2s, k=<span class="nm">2</span>)
+
+    <span class="cm"># Keep only matches where best is &lt;75% of second best</span>
+    good = [m <span class="kw">for</span> m, n <span class="kw">in</span> knn_matches <span class="kw">if</span> m.distance &lt; <span class="nm">0.75</span> * n.distance]
+    <span class="fn">print</span>(<span class="fn">f</span><span class="st">"Good SIFT matches: {len(good)}"</span>)
+<span class="kw">except</span>:
+    <span class="fn">print</span>(<span class="st">"SIFT needs opencv-contrib-python"</span>)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     6. HOMOGRAPHY
+════════════════════════════════════════ -->
+<section class="sec" id="homography">
+  <div class="sec-head">
+    <div class="sec-label">06 · Geometric Transforms</div>
+    <h2>Homography &amp; <span class="accent2">Perspective</span></h2>
+    <p class="sec-desc">// Mapping one plane to another: panoramas, AR, document scanning</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    When you photograph a whiteboard at an angle, it looks like a parallelogram. Homography <strong>unwarps</strong> that back to a flat rectangle — as if you were looking directly above it. This same math powers: panorama stitching (aligning multiple photos), AR marker tracking (placing virtual objects on real surfaces), document scanning (straightening scanned paper).
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Homography Matrix (3×3)</div>
+    <div class="math-f">Homogeneous coordinates: p' = H · p
+
+[x'w]   [h11  h12  h13]   [x]
+[y'w] = [h21  h22  h23] × [y]
+[w  ]   [h31  h32  1  ]   [1]
+
+Final:  x' = x'w / w
+        y' = y'w / w
+
+H has 8 degrees of freedom (last element = 1 by convention)
+Needs minimum 4 point correspondences to solve.
+
+Solved via DLT (Direct Linear Transform):
+Ah = 0 → SVD of A → h = last column of V</div>
+    <div class="math-note">
+      Affine transform: 6 DoF (no perspective, parallel lines stay parallel)<br>
+      Homography: 8 DoF (full perspective, parallel lines can converge)<br>
+      RANSAC: randomly sample 4 points, compute H, count inliers, repeat<br>
+      After N iterations: keep H with most inliers = robust to outlier matches
+    </div>
+  </div>
+
+  <div class="matrix-wrap">
+    <div>
+      <div class="matrix m3">
+        <div class="mc c">h<sub>11</sub></div><div class="mc c">h<sub>12</sub></div><div class="mc o">h<sub>13</sub></div>
+        <div class="mc c">h<sub>21</sub></div><div class="mc c">h<sub>22</sub></div><div class="mc o">h<sub>23</sub></div>
+        <div class="mc p">h<sub>31</sub></div><div class="mc p">h<sub>32</sub></div><div class="mc d">1</div>
+      </div>
+      <div class="matrix-label">
+        <span style="color:var(--cyan)">■</span> rotation/scale &nbsp;
+        <span style="color:var(--orange)">■</span> translation &nbsp;
+        <span style="color:var(--purple)">■</span> perspective distortion
+      </div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="math" style="margin:0">
+        <div class="math-label">// Special cases</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:2;color:#b8bdcf">
+          h₃₁=h₃₂=0 → <span style="color:var(--cyan)">Affine</span> (no perspective)<br>
+          Also uniform scale → <span style="color:var(--lime)">Similarity</span><br>
+          Also no rotation → <span style="color:var(--orange)">Translation</span> only<br>
+          h₁₁=h₂₂, h₁₂=-h₂₁ → <span style="color:var(--pink)">Euclidean</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">homography.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img = cv2.<span class="fn">imread</span>(<span class="st">'document.jpg'</span>)
+
+<span class="cm"># ── Manual: 4 corners clicked by user ─────────────</span>
+<span class="cm"># src = corners in the distorted image</span>
+<span class="cm"># dst = desired output positions (rectangle)</span>
+src_pts = np.<span class="fn">float32</span>([[<span class="nm">120</span>,<span class="nm">80</span>], [<span class="nm">580</span>,<span class="nm">50</span>],
+                        [<span class="nm">620</span>,<span class="nm">480</span>], [<span class="nm">80</span>,<span class="nm">500</span>]])
+dst_pts = np.<span class="fn">float32</span>([[<span class="nm">0</span>,<span class="nm">0</span>],   [<span class="nm">500</span>,<span class="nm">0</span>],
+                        [<span class="nm">500</span>,<span class="nm">600</span>],[<span class="nm">0</span>,<span class="nm">600</span>]])
+
+H, _ = cv2.<span class="fn">findHomography</span>(src_pts, dst_pts)
+warped = cv2.<span class="fn">warpPerspective</span>(img, H, (<span class="nm">500</span>, <span class="nm">600</span>))
+
+<span class="cm"># ── From keypoint matches (RANSAC) ────────────────</span>
+<span class="cm"># Assuming 'good' matches from SIFT/ORB above</span>
+<span class="kw">if</span> <span class="fn">len</span>(good) > <span class="nm">4</span>:
+    src_pts = np.<span class="fn">float32</span>(
+        [kp1s[m.queryIdx].pt <span class="kw">for</span> m <span class="kw">in</span> good]).<span class="fn">reshape</span>(<span class="op">-1</span>,<span class="nm">1</span>,<span class="nm">2</span>)
+    dst_pts = np.<span class="fn">float32</span>(
+        [kp2s[m.trainIdx].pt <span class="kw">for</span> m <span class="kw">in</span> good]).<span class="fn">reshape</span>(<span class="op">-1</span>,<span class="nm">1</span>,<span class="nm">2</span>)
+
+    <span class="cm"># RANSAC: robustly estimates H despite outlier matches</span>
+    H, mask = cv2.<span class="fn">findHomography</span>(src_pts, dst_pts,
+                                  cv2.RANSAC, ransacReprojThreshold=<span class="nm">5.0</span>)
+
+    <span class="cm"># Reproject: draw only inlier matches</span>
+    inliers = [good[i] <span class="kw">for</span> i,v <span class="kw">in</span> <span class="fn">enumerate</span>(mask.ravel()) <span class="kw">if</span> v == <span class="nm">1</span>]
+    <span class="fn">print</span>(<span class="fn">f</span><span class="st">"Inlier matches: {len(inliers)} / {len(good)}"</span>)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     7. OPTICAL FLOW
+════════════════════════════════════════ -->
+<section class="sec" id="optflow">
+  <div class="sec-head">
+    <div class="sec-label">07 · Motion Analysis</div>
+    <h2>Optical <span class="accent4">Flow</span></h2>
+    <p class="sec-desc">// Tracking how pixels move between video frames</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    Stand still in a train station and watch people walk. You see each person's <strong>direction and speed</strong> of movement — a mental "arrow" on everyone. Optical flow computes exactly these arrows for every pixel (dense) or tracked points (sparse) between two consecutive video frames. It's used for: measuring object velocity, action recognition, video stabilisation, and autonomous vehicle speed estimation.
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Brightness Constancy Constraint (core assumption)</div>
+    <div class="math-f">I(x, y, t) = I(x + u, y + v, t + 1)
+
+Taylor expansion → Optical Flow Equation:
+Iₓ·u + Iᵧ·v + I_t = 0
+
+where:
+  Iₓ = ∂I/∂x  (spatial gradient x)
+  Iᵧ = ∂I/∂y  (spatial gradient y)
+  I_t = ∂I/∂t  (temporal gradient = frame difference)
+  u,v = optical flow vector at pixel (x,y)</div>
+    <div class="math-note">
+      This is ONE equation with TWO unknowns (u,v) — the aperture problem!<br>
+      Lucas-Kanade: assumes constant flow in a small window → solvable via least squares<br>
+      Horn-Schunck: global regularisation (smoothness constraint) → dense flow field<br>
+      Farneback: polynomial approximation of pixel neighbourhood
+    </div>
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Lucas-Kanade Solution</div>
+    <div class="math-f">For n pixels in window, stack equations:
+A·[u,v]ᵀ = -b
+
+A = [Iₓ₁ Iᵧ₁]    b = [I_t₁]
+    [Iₓ₂ Iᵧ₂]        [I_t₂]
+    [  ⋮    ⋮]        [  ⋮ ]
+
+Least squares: [u,v]ᵀ = (AᵀA)⁻¹ · (-Aᵀb)
+
+AᵀA = [ΣIₓ²   ΣIₓIᵧ]  ← this is the Harris M matrix!
+      [ΣIₓIᵧ  ΣIᵧ²  ]</div>
+    <div class="math-note">
+      Good tracking requires AᵀA to be invertible → both eigenvalues large → corners!<br>
+      This is why Shi-Tomasi "Good Features To Track" uses corner quality = min(λ₁, λ₂)
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">optical_flow.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+cap = cv2.<span class="fn">VideoCapture</span>(<span class="st">'video.mp4'</span>)
+ret, old_frame = cap.<span class="fn">read</span>()
+old_gray = cv2.<span class="fn">cvtColor</span>(old_frame, cv2.COLOR_BGR2GRAY)
+
+<span class="cm"># ── Sparse: Lucas-Kanade on corner points ────────</span>
+<span class="cm"># Detect good corners to track</span>
+p0 = cv2.<span class="fn">goodFeaturesToTrack</span>(old_gray, maxCorners=<span class="nm">100</span>,
+    qualityLevel=<span class="nm">0.3</span>, minDistance=<span class="nm">7</span>, blockSize=<span class="nm">7</span>)
+
+lk_params = <span class="fn">dict</span>(winSize=(<span class="nm">15</span>,<span class="nm">15</span>), maxLevel=<span class="nm">3</span>,
+    criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, <span class="nm">10</span>, <span class="nm">0.03</span>))
+
+<span class="kw">while True</span>:
+    ret, frame = cap.<span class="fn">read</span>()
+    <span class="kw">if not</span> ret: <span class="kw">break</span>
+    gray = cv2.<span class="fn">cvtColor</span>(frame, cv2.COLOR_BGR2GRAY)
+
+    <span class="cm"># Calculate flow: returns new positions + status</span>
+    p1, st, err = cv2.<span class="fn">calcOpticalFlowPyrLK</span>(old_gray, gray, p0, <span class="kw">None</span>, **lk_params)
+
+    <span class="cm"># Keep only successfully tracked points</span>
+    good_new = p1[st == <span class="nm">1</span>]
+    good_old = p0[st == <span class="nm">1</span>]
+
+    <span class="kw">for</span> (new, old) <span class="kw">in</span> <span class="fn">zip</span>(good_new, good_old):
+        a, b = new.<span class="fn">ravel</span>().<span class="fn">astype</span>(int)
+        c, d = old.<span class="fn">ravel</span>().<span class="fn">astype</span>(int)
+        cv2.<span class="fn">arrowedLine</span>(frame, (c,d), (a,b), (<span class="nm">0</span>,<span class="nm">255</span>,<span class="nm">0</span>), <span class="nm">2</span>)
+
+    old_gray = gray.<span class="fn">copy</span>()
+    p0 = good_new.<span class="fn">reshape</span>(<span class="op">-1</span>,<span class="nm">1</span>,<span class="nm">2</span>)
+
+<span class="cm"># ── Dense: Farneback (flow for every pixel) ───────</span>
+ret1, f1 = cap.<span class="fn">read</span>()
+ret2, f2 = cap.<span class="fn">read</span>()
+g1 = cv2.<span class="fn">cvtColor</span>(f1, cv2.COLOR_BGR2GRAY)
+g2 = cv2.<span class="fn">cvtColor</span>(f2, cv2.COLOR_BGR2GRAY)
+
+flow = cv2.<span class="fn">calcOpticalFlowFarneback</span>(g1, g2, <span class="kw">None</span>,
+    pyr_scale=<span class="nm">0.5</span>, levels=<span class="nm">3</span>, winsize=<span class="nm">15</span>,
+    iterations=<span class="nm">3</span>, poly_n=<span class="nm">5</span>, poly_sigma=<span class="nm">1.2</span>, flags=<span class="nm">0</span>)
+
+<span class="cm"># flow[:,:,0] = u (x-displacement), flow[:,:,1] = v (y-displacement)</span>
+magnitude, angle = cv2.<span class="fn">cartToPolar</span>(flow[:,:,<span class="nm">0</span>], flow[:,:,<span class="nm">1</span>])
+<span class="cm"># Visualise as HSV: hue=direction, saturation=1, value=magnitude</span>
+hsv = np.<span class="fn">zeros_like</span>(f1)
+hsv[...,<span class="nm">0</span>] = angle * <span class="nm">90</span> / np.pi    <span class="cm"># 0-180 hue</span>
+hsv[...,<span class="nm">1</span>] = <span class="nm">255</span>
+hsv[...,<span class="nm">2</span>] = cv2.<span class="fn">normalize</span>(magnitude, <span class="kw">None</span>, <span class="nm">0</span>, <span class="nm">255</span>, cv2.NORM_MINMAX)
+flow_vis = cv2.<span class="fn">cvtColor</span>(hsv, cv2.COLOR_HSV2BGR)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     8. CAMERA GEOMETRY
+════════════════════════════════════════ -->
+<section class="sec" id="camera">
+  <div class="sec-head">
+    <div class="sec-label">08 · Camera Models</div>
+    <h2>Camera <span class="accent">Intrinsics</span> &amp; <span class="accent2">Calibration</span></h2>
+    <p class="sec-desc">// The math of how 3D world maps to 2D pixels</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    A camera is like a pinhole box. Light from a 3D world point passes through the lens (the pinhole) and hits the sensor. The <strong>intrinsic matrix K</strong> encodes the camera's physics: focal length (how zoomed in), and optical centre (where the image is centred). The <strong>extrinsic matrix [R|t]</strong> encodes where the camera is in the world — its rotation and translation. Together they explain: "given this 3D point, where exactly does it appear in pixels?"
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Camera Projection Model</div>
+    <div class="math-f">3D → 2D pixel projection:
+
+λ·[u]   [fx  0   cx]   [r11 r12 r13 t1]   [X]
+  [v] = [0   fy  cy] · [r21 r22 r23 t2] · [Y]
+  [1]   [0   0   1 ]   [r31 r32 r33 t3]   [Z]
+                                           [1]
+= K · [R | t] · P_world
+
+λ = depth (normalise at end)
+u = fx(X/Z) + cx
+v = fy(Y/Z) + cy</div>
+    <div class="math-note">
+      K = intrinsic matrix (camera-specific, stays constant)<br>
+      fx, fy = focal length in pixels &nbsp;|&nbsp; cx, cy = principal point (image centre)<br>
+      R = 3×3 rotation matrix &nbsp;|&nbsp; t = 3×1 translation vector (extrinsics)<br>
+      Distortion coefficients k₁,k₂,k₃ (radial) and p₁,p₂ (tangential) model lens warping
+    </div>
+  </div>
+
+  <div class="matrix-wrap">
+    <div>
+      <div class="matrix m3">
+        <div class="mc c">f<sub>x</sub></div><div class="mc d">0</div><div class="mc o">c<sub>x</sub></div>
+        <div class="mc d">0</div><div class="mc c">f<sub>y</sub></div><div class="mc o">c<sub>y</sub></div>
+        <div class="mc d">0</div><div class="mc d">0</div><div class="mc d">1</div>
+      </div>
+      <div class="matrix-label">K — Camera Intrinsic Matrix<br><span style="color:var(--cyan)">focal</span> / <span style="color:var(--orange)">principal point</span></div>
+    </div>
+    <div style="flex:1;min-width:220px">
+      <div class="math" style="margin:0">
+        <div class="math-label">// Calibration targets</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;line-height:1.9;color:#b8bdcf">
+          Chessboard: findChessboardCorners<br>
+          Circle grid: findCirclesGrid<br>
+          Minimum: <span style="color:var(--cyan)">10 images</span>, varied angles<br>
+          Output: K, dist, rvecs, tvecs<br>
+          undistort() uses K + dist to fix<br>lens warping in images
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">camera_calibration.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> glob
+
+<span class="cm"># ── Calibrate camera from chessboard images ───────</span>
+CHECKERBOARD = (<span class="nm">7</span>, <span class="nm">6</span>)  <span class="cm"># inner corners (cols, rows)</span>
+
+objp = np.<span class="fn">zeros</span>((<span class="nm">7</span>*<span class="nm">6</span>, <span class="nm">3</span>), np.float32)
+objp[:, :<span class="nm">2</span>] = np.<span class="fn">mgrid</span>[<span class="nm">0</span>:<span class="nm">7</span>, <span class="nm">0</span>:<span class="nm">6</span>].T.<span class="fn">reshape</span>(<span class="op">-1</span>, <span class="nm">2</span>)
+
+objpoints, imgpoints = [], []
+
+<span class="kw">for</span> fname <span class="kw">in</span> glob.<span class="fn">glob</span>(<span class="st">'calibration/*.jpg'</span>):
+    img = cv2.<span class="fn">imread</span>(fname)
+    gray = cv2.<span class="fn">cvtColor</span>(img, cv2.COLOR_BGR2GRAY)
+    ret, corners = cv2.<span class="fn">findChessboardCorners</span>(gray, CHECKERBOARD, <span class="kw">None</span>)
+
+    <span class="kw">if</span> ret:
+        <span class="cm"># Refine to sub-pixel accuracy</span>
+        corners2 = cv2.<span class="fn">cornerSubPix</span>(gray, corners, (<span class="nm">11</span>,<span class="nm">11</span>), (<span class="op">-1</span>,<span class="op">-1</span>),
+            (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, <span class="nm">30</span>, <span class="nm">0.001</span>))
+        objpoints.<span class="fn">append</span>(objp)
+        imgpoints.<span class="fn">append</span>(corners2)
+
+<span class="cm"># Compute K, distortion, rotation/translation per image</span>
+ret, K, dist, rvecs, tvecs = cv2.<span class="fn">calibrateCamera</span>(
+    objpoints, imgpoints, gray.shape[::<span class="op">-1</span>], <span class="kw">None</span>, <span class="kw">None</span>)
+
+<span class="fn">print</span>(<span class="st">"Intrinsic matrix K:\n"</span>, K)
+<span class="fn">print</span>(<span class="st">"Distortion coefficients:"</span>, dist)
+<span class="fn">print</span>(<span class="fn">f</span><span class="st">"RMS reprojection error: {ret:.4f} px"</span>)
+
+<span class="cm"># Undistort a new image</span>
+new_img = cv2.<span class="fn">imread</span>(<span class="st">'distorted.jpg'</span>)
+h, w = new_img.shape[:<span class="nm">2</span>]
+newK, roi = cv2.<span class="fn">getOptimalNewCameraMatrix</span>(K, dist, (w,h), <span class="nm">1</span>, (w,h))
+undistorted = cv2.<span class="fn">undistort</span>(new_img, K, dist, <span class="kw">None</span>, newK)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     9. STEREO / DEPTH
+════════════════════════════════════════ -->
+<section class="sec" id="stereo">
+  <div class="sec-head">
+    <div class="sec-label">09 · 3D Reconstruction</div>
+    <h2>Stereo Vision &amp; <span class="accent3">Depth Maps</span></h2>
+    <p class="sec-desc">// Computing distance from two cameras the way eyes work</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    Hold a finger in front of your face. Close your left eye — see how its position shifts? Now close the right eye instead. That shift is called <strong>disparity</strong>, and it encodes depth: close objects have huge disparity, far objects have tiny disparity. Your brain does this calculation instinctively. Stereo vision gives two cameras the same ability: larger disparity = closer object.
+  </div>
+
+  <div class="math">
+    <div class="math-label">// Stereo Depth Formula</div>
+    <div class="math-f">Disparity:  d = x_L - x_R  (pixel difference between cameras)
+
+Depth:      Z = (f · B) / d
+
+where:
+  f = focal length (pixels)
+  B = baseline (distance between cameras in metres)
+  d = disparity (pixels) — must be > 0
+
+Point cloud (3D coords):
+  X = Z · (u - cx) / fx
+  Y = Z · (v - cy) / fy
+  Z = (f · B) / d</div>
+    <div class="math-note">
+      Epipolar geometry: corresponding points lie on conjugate horizontal lines.<br>
+      Rectification: stereo pair transformed so epipolar lines are perfectly horizontal.<br>
+      Stereo matching (SGBM, BM): for each pixel in left image, find matching pixel in right.<br>
+      Depth precision: ΔZ ∝ Z²/(f·B) — deeper = less precise.
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">stereo_depth.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># Assuming calibrated stereo pair (K1, K2, R, T from stereoCalibrate)</span>
+imgL = cv2.<span class="fn">imread</span>(<span class="st">'left.jpg'</span>, cv2.IMREAD_GRAYSCALE)
+imgR = cv2.<span class="fn">imread</span>(<span class="st">'right.jpg'</span>, cv2.IMREAD_GRAYSCALE)
+
+<span class="cm"># ── Stereo rectification ───────────────────────────</span>
+<span class="cm"># R1, R2 = rotation matrices; P1, P2 = projection matrices</span>
+<span class="cm"># Q = disparity-to-depth mapping matrix</span>
+R1, R2, P1, P2, Q, _, _ = cv2.<span class="fn">stereoRectify</span>(
+    K1, dist1, K2, dist2, imgL.shape[::-<span class="nm">1</span>], R, T)
+
+map1L, map2L = cv2.<span class="fn">initUndistortRectifyMap</span>(K1, dist1, R1, P1,
+                    imgL.shape[::-<span class="nm">1</span>], cv2.CV_16SC2)
+map1R, map2R = cv2.<span class="fn">initUndistortRectifyMap</span>(K2, dist2, R2, P2,
+                    imgR.shape[::-<span class="nm">1</span>], cv2.CV_16SC2)
+
+rectL = cv2.<span class="fn">remap</span>(imgL, map1L, map2L, cv2.INTER_LINEAR)
+rectR = cv2.<span class="fn">remap</span>(imgR, map1R, map2R, cv2.INTER_LINEAR)
+
+<span class="cm"># ── Compute disparity → depth ──────────────────────</span>
+<span class="cm"># SGBM = Semi-Global Block Matching (better quality)</span>
+stereo = cv2.StereoSGBM_<span class="fn">create</span>(
+    minDisparity=<span class="nm">0</span>, numDisparities=<span class="nm">64</span>, blockSize=<span class="nm">5</span>,
+    P1=<span class="nm">8</span>*<span class="nm">3</span>*<span class="nm">5</span>**<span class="nm">2</span>, P2=<span class="nm">32</span>*<span class="nm">3</span>*<span class="nm">5</span>**<span class="nm">2</span>, disp12MaxDiff=<span class="nm">1</span>,
+    mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY)
+
+disparity = stereo.<span class="fn">compute</span>(rectL, rectR).astype(np.float32) / <span class="nm">16</span>
+
+<span class="cm"># Convert disparity to 3D points</span>
+<span class="cm"># Q matrix encodes f, cx, cy, baseline</span>
+points_3D = cv2.<span class="fn">reprojectImageTo3D</span>(disparity, Q)
+depth = points_3D[:,:,<span class="nm">2</span>]  <span class="cm"># Z component = depth in metres
+
+</span>
+<span class="cm"># Visualise disparity as colour map</span>
+disp_norm = cv2.<span class="fn">normalize</span>(disparity, <span class="kw">None</span>, <span class="nm">0</span>, <span class="nm">255</span>, cv2.NORM_MINMAX, cv2.CV_8U)
+disp_color = cv2.<span class="fn">applyColorMap</span>(disp_norm, cv2.COLORMAP_JET)</pre>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════
+     10. CNN BASICS
+════════════════════════════════════════ -->
+<section class="sec" id="cnn">
+  <div class="sec-head">
+    <div class="sec-label">10 · Deep Learning Bridge</div>
+    <h2>CNNs &amp; How <span class="accent5">Deep Learning</span> Connects</h2>
+    <p class="sec-desc">// Why everything above is still inside every neural network</p>
+  </div>
+
+  <div class="analogy">
+    <div class="al-label">💡 Real Life Analogy</div>
+    A CNN is a stack of learnable convolution kernels. Where you manually designed a Sobel kernel to detect edges, a CNN <strong>learns its own kernels from data</strong>. Early layers learn edge detectors (just like Sobel), middle layers learn textures and shapes, deep layers learn semantic concepts ("wheel", "face"). The math is identical — it's just that the kernel values are parameters optimised by gradient descent instead of being hand-crafted.
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <span class="fn">input</span>
+      <h5>Image</h5>
+      <p>H × W × 3 (RGB tensor)</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">conv+relu</span>
+      <h5>Conv Layers</h5>
+      <p>Learned kernels + activation</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">pool</span>
+      <h5>Pooling</h5>
+      <p>Spatial downsampling</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">flatten</span>
+      <h5>Feature Map</h5>
+      <p>Spatial → 1D vector</p>
+    </div>
+    <div class="flow-step">
+      <span class="fn">fc+softmax</span>
+      <h5>Classifier</h5>
+      <p>Class probabilities</p>
+    </div>
+  </div>
+
+  <div class="math">
+    <div class="math-label">// CNN Forward Pass Math</div>
+    <div class="math-f">Conv layer:
+  O[f,x,y] = Σ_c Σ_i Σ_j I[c, x+i, y+j] · W[f,c,i,j] + b[f]
+
+ReLU activation:
+  A = max(0, O)    ← kills negative activations
+
+Max Pooling (2×2):
+  P[x,y] = max(A[2x:2x+2, 2y:2y+2])
+
+Batch Normalisation:
+  x̂ = (x - μ_B) / √(σ²_B + ε)
+  y = γ·x̂ + β    ← learned scale and shift</div>
+    <div class="math-note">
+      f = filter index (how many kernels) &nbsp;|&nbsp; c = input channel &nbsp;|&nbsp; i,j = kernel position<br>
+      W = learnable weights (= the kernels!) &nbsp;|&nbsp; b = bias per filter<br>
+      Backprop computes ∂Loss/∂W via chain rule → gradient descent updates W<br>
+      Receptive field grows with depth: deep neurons "see" large image areas
+    </div>
+  </div>
+
+  <div class="code">
+    <div class="code-bar"><span class="filename">cnn_inference_opencv.py</span><span class="lang">python</span></div>
+<pre><span class="kw">import</span> cv2
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># ── OpenCV DNN: run pretrained models without PyTorch ─</span>
+<span class="cm"># Supports: ONNX, TensorFlow, Caffe, Darknet models</span>
+
+<span class="cm"># Load ONNX model (e.g. YOLOv5 or ResNet)</span>
+net = cv2.dnn.<span class="fn">readNetFromONNX</span>(<span class="st">'model.onnx'</span>)
+<span class="cm"># Optionally use GPU: set backend + target</span>
+net.<span class="fn">setPreferableBackend</span>(cv2.dnn.DNN_BACKEND_CUDA)
+net.<span class="fn">setPreferableTarget</span>(cv2.dnn.DNN_TARGET_CUDA)
+
+img = cv2.<span class="fn">imread</span>(<span class="st">'photo.jpg'</span>)
+
+<span class="cm"># Preprocess: resize, scale, channel order</span>
+<span class="cm"># blobFromImage: normalize + reshape to NCHW format</span>
+blob = cv2.dnn.<span class="fn">blobFromImage</span>(img,
+    scalefactor=<span class="nm">1.0</span>/<span class="nm">255.0</span>,  <span class="cm"># 0-1 normalisation</span>
+    size=(<span class="nm">640</span>, <span class="nm">640</span>),
+    mean=(<span class="nm">0.485</span>, <span class="nm">0.456</span>, <span class="nm">0.406</span>),  <span class="cm"># ImageNet mean</span>
+    swapRB=<span class="kw">True</span>,               <span class="cm"># BGR → RGB</span>
+    crop=<span class="kw">False</span>)
+
+net.<span class="fn">setInput</span>(blob)
+output = net.<span class="fn">forward</span>()
+
+<span class="cm"># ── Visualise intermediate CNN layer activations ───</span>
+layer_names = net.<span class="fn">getLayerNames</span>()
+<span class="fn">print</span>(<span class="st">"Layers:"</span>, layer_names[:<span class="nm">10</span>])
+
+<span class="cm"># Get specific layer output (feature map)</span>
+net.<span class="fn">setInput</span>(blob)
+feature_map = net.<span class="fn">forward</span>(<span class="st">'conv1'</span>)
+<span class="cm"># feature_map shape: (1, num_filters, H, W)</span>
+<span class="cm"># Each filter = one learned kernel's response = edge/texture detector</span>
+
+<span class="cm"># Visualise filter 0 response</span>
+f0 = feature_map[<span class="nm">0</span>, <span class="nm">0</span>]  <span class="cm"># first filter</span>
+f0_vis = cv2.<span class="fn">normalize</span>(f0, <span class="kw">None</span>, <span class="nm">0</span>, <span class="nm">255</span>, cv2.NORM_MINMAX, cv2.CV_8U)
+<span class="cm"># This looks like a Sobel/Gabor response — the network learned edge detection!</span></pre>
+  </div>
+
+  <hr class="div">
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon">🔗</div>
+      <h4>Classical → Deep Learning Bridge</h4>
+      <p>Conv kernels in CNNs are the same math as filter2D. ReLU is thresholding. Pooling is downsampling. Batch norm is histogram normalisation. Deep learning automates the kernel design.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📐</div>
+      <h4>When to use classical CV</h4>
+      <p>Real-time embedded (no GPU), explainability required, small datasets, geometric problems (calibration, stereo, optical flow), structured environments with known shapes.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧠</div>
+      <h4>When to use deep learning</h4>
+      <p>Large datasets available, complex unstructured scenes, classification/detection/segmentation, when accuracy matters more than interpretability, cloud/GPU deployment.</p>
+    </div>
+  </div>
+
+  <div class="tbl" style="margin-top:24px">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Task</th><th>Classical Approach</th><th>Deep Learning</th><th>Recommended</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Edge detection</td>
+          <td>Canny, Sobel</td>
+          <td>HED, DEXTR</td>
+          <td><span class="badge bc">Canny for speed</span></td>
+        </tr>
+        <tr>
+          <td>Object detection</td>
+          <td>HOG+SVM, Haar</td>
+          <td>YOLO, DETR</td>
+          <td><span class="badge bl">YOLO for accuracy</span></td>
+        </tr>
+        <tr>
+          <td>Feature matching</td>
+          <td>SIFT, ORB</td>
+          <td>SuperGlue, LoFTR</td>
+          <td><span class="badge bc">ORB realtime, SIFT accuracy</span></td>
+        </tr>
+        <tr>
+          <td>Optical flow</td>
+          <td>Lucas-Kanade, Farneback</td>
+          <td>RAFT, FlowNet</td>
+          <td><span class="badge bc">LK for sparse tracking</span></td>
+        </tr>
+        <tr>
+          <td>Depth estimation</td>
+          <td>Stereo SGBM</td>
+          <td>MiDaS, DepthAnything</td>
+          <td><span class="badge bo">DL for monocular depth</span></td>
+        </tr>
+        <tr>
+          <td>Segmentation</td>
+          <td>Watershed, GrabCut</td>
+          <td>SAM, Mask R-CNN</td>
+          <td><span class="badge bl">SAM for general use</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<footer class="footer">
+  // computer_vision_advanced.html &nbsp;·&nbsp; Part 2 of 2 &nbsp;·&nbsp; opencv-python &nbsp;·&nbsp; Claude
+</footer>
+
+</body>
+</html>
