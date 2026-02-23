@@ -1,0 +1,2097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenCV · Computer Vision Algorithms</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --panel: #1a1a26;
+    --border: #2a2a3d;
+    --accent: #00e5ff;
+    --accent2: #ff6b35;
+    --accent3: #a78bfa;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --green: #00ffa3;
+    --yellow: #ffd166;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid noise background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    padding: 48px 40px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .logo-area h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(28px, 5vw, 52px);
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+
+  .logo-area h1 span { color: var(--accent); }
+
+  .logo-area p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .badge {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+
+  nav {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    scrollbar-width: none;
+  }
+
+  nav::-webkit-scrollbar { display: none; }
+
+  .nav-btn {
+    flex-shrink: 0;
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-btn:hover { color: var(--text); }
+  .nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  main {
+    position: relative;
+    z-index: 1;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 32px;
+    max-width: 700px;
+    line-height: 1.6;
+  }
+
+  /* Cards grid */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .card-tag {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  .card-body { padding: 20px 24px; }
+
+  canvas {
+    display: block;
+    width: 100%;
+    border-radius: 8px;
+    background: #0d0d14;
+    margin-bottom: 16px;
+    image-rendering: pixelated;
+  }
+
+  .formula {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.7;
+    margin-bottom: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .explain {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .explain strong { color: var(--text); }
+
+  .code-block {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    overflow-x: auto;
+    margin-top: 12px;
+  }
+
+  .kw { color: var(--accent3); }
+  .fn { color: var(--accent); }
+  .str { color: var(--green); }
+  .cm { color: var(--muted); }
+  .num { color: var(--yellow); }
+  .var { color: var(--text); }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .ctrl-btn {
+    padding: 7px 16px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .ctrl-btn:hover, .ctrl-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .slider-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 90px;
+  }
+
+  input[type=range] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+
+  .slider-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 30px;
+    text-align: right;
+  }
+
+  /* Kernel grid */
+  .kernel-grid {
+    display: inline-grid;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .kernel-cell {
+    width: 44px;
+    height: 44px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .kernel-cell.pos { color: var(--green); }
+  .kernel-cell.neg { color: var(--accent2); }
+  .kernel-cell.zero { color: var(--muted); }
+  .kernel-cell.center { border-color: var(--accent); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .stat-row:last-child { border-bottom: none; }
+  .stat-key { color: var(--muted); }
+  .stat-val { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 12px; }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    margin: 2px;
+  }
+
+  /* Color strips */
+  .c-cyan { background: rgba(0,229,255,0.15); color: var(--accent); border: 1px solid rgba(0,229,255,0.3); }
+  .c-orange { background: rgba(255,107,53,0.15); color: var(--accent2); border: 1px solid rgba(255,107,53,0.3); }
+  .c-purple { background: rgba(167,139,250,0.15); color: var(--accent3); border: 1px solid rgba(167,139,250,0.3); }
+  .c-green { background: rgba(0,255,163,0.15); color: var(--green); border: 1px solid rgba(0,255,163,0.3); }
+
+  .section-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-area">
+    <h1>Open<span>CV</span> · Vision Algorithms</h1>
+    <p>// math, kernels, transforms, detectors — visualized</p>
+  </div>
+  <div class="badge">Python · NumPy · OpenCV</div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="show('filtering')">Image Filtering</button>
+  <button class="nav-btn" onclick="show('edges')">Edge Detection</button>
+  <button class="nav-btn" onclick="show('transforms')">Transforms</button>
+  <button class="nav-btn" onclick="show('features')">Feature Detection</button>
+  <button class="nav-btn" onclick="show('morphology')">Morphology</button>
+  <button class="nav-btn" onclick="show('color')">Color Spaces</button>
+  <button class="nav-btn" onclick="show('contours')">Contours & Moments</button>
+  <button class="nav-btn" onclick="show('optical')">Optical Flow</button>
+</nav>
+
+<main>
+
+<!-- ============ FILTERING ============ -->
+<div class="section active" id="filtering">
+  <div class="section-title">Image Filtering & Convolution</div>
+  <div class="section-desc">The foundation of CV. A kernel (small matrix) slides over the image, computing a weighted sum at each pixel. This is discrete 2D convolution.</div>
+  <div class="section-grid">
+
+    <!-- Convolution card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">⊛</div>
+        <div>
+          <div class="card-title">2D Convolution</div>
+        </div>
+        <div class="card-tag c-cyan">core math</div>
+      </div>
+      <div class="card-body">
+        <canvas id="conv-canvas" height="160"></canvas>
+        <div class="formula">Output(x,y) = Σ Σ I(x+i, y+j) · K(i,j)
+                  i  j
+cv2.filter2D(img, -1, kernel)</div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-family:'DM Mono',monospace;">KERNEL (3×3)</div>
+          <div class="controls">
+            <button class="ctrl-btn active" onclick="setKernel('blur',this)">Blur</button>
+            <button class="ctrl-btn" onclick="setKernel('sharpen',this)">Sharpen</button>
+            <button class="ctrl-btn" onclick="setKernel('edge',this)">Edge</button>
+            <button class="ctrl-btn" onclick="setKernel('emboss',this)">Emboss</button>
+          </div>
+          <div id="kernel-display" class="kernel-grid" style="grid-template-columns:repeat(3,1fr)"></div>
+        </div>
+        <div class="explain"><strong>Key insight:</strong> Larger kernels = more blur/effect but slower (O(n²) per pixel). Separable kernels split into 1D passes for speed.</div>
+      </div>
+    </div>
+
+    <!-- Gaussian card -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(167,139,250,0.1)">∿</div>
+        <div><div class="card-title">Gaussian Blur</div></div>
+        <div class="card-tag c-purple">low-pass filter</div>
+      </div>
+      <div class="card-body">
+        <canvas id="gauss-canvas" height="160"></canvas>
+        <div class="slider-row">
+          <span class="slider-label">σ (sigma)</span>
+          <input type="range" min="1" max="40" value="8" id="gauss-sigma" oninput="updateGauss()">
+          <span class="slider-val" id="gauss-val">8</span>
+        </div>
+        <div class="formula">G(x,y) = 1/(2πσ²) · e^(-(x²+y²)/2σ²)
+cv2.GaussianBlur(img, (ksize,ksize), σ)</div>
+        <div class="explain"><strong>Separable:</strong> G(x,y) = G(x)·G(y), so it decomposes into two 1D passes — O(kn) instead of O(k²n). Used in Canny, SIFT, and scale-space.</div>
+      </div>
+    </div>
+
+    <!-- Bilateral -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,255,163,0.1)">◈</div>
+        <div><div class="card-title">Bilateral Filter</div></div>
+        <div class="card-tag c-green">edge-preserving</div>
+      </div>
+      <div class="card-body">
+        <canvas id="bilateral-canvas" height="160"></canvas>
+        <div class="formula">BF[I](p) = 1/Wₚ · Σ Gσs(||p-q||)·Gσr(|Ip-Iq|)·Iq
+                           q
+cv2.bilateralFilter(img, d, σColor, σSpace)</div>
+        <div class="explain">Two Gaussians: <strong>spatial</strong> (distance in pixels) and <strong>range</strong> (intensity difference). Only blurs pixels with similar color → edges preserved. Used for HDR tone-mapping, skin smoothing.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ EDGES ============ -->
+<div class="section" id="edges">
+  <div class="section-title">Edge Detection</div>
+  <div class="section-desc">Edges are locations of rapid intensity change — computed via image gradients. Different operators have different math and frequency responses.</div>
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">∇</div>
+        <div><div class="card-title">Sobel / Gradient</div></div>
+        <div class="card-tag c-cyan">1st derivative</div>
+      </div>
+      <div class="card-body">
+        <canvas id="sobel-canvas" height="200"></canvas>
+        <div class="two-col" style="margin-bottom:12px">
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px">Gx (horizontal)</div>
+            <div class="kernel-grid" style="grid-template-columns:repeat(3,1fr)" id="sobel-x-kernel"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px">Gy (vertical)</div>
+            <div class="kernel-grid" style="grid-template-columns:repeat(3,1fr)" id="sobel-y-kernel"></div>
+          </div>
+        </div>
+        <div class="formula">G = √(Gx² + Gy²)   θ = arctan(Gy/Gx)
+cv2.Sobel(img,cv2.CV_64F,1,0,ksize=3)  # x
+cv2.Sobel(img,cv2.CV_64F,0,1,ksize=3)  # y</div>
+        <div class="explain"><strong>Magnitude</strong> = edge strength. <strong>Angle θ</strong> = edge direction (perpendicular to gradient). Scharr is more rotationally symmetric. Laplacian uses 2nd derivative.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(255,107,53,0.1)">⚡</div>
+        <div><div class="card-title">Canny Edge Detector</div></div>
+        <div class="card-tag c-orange">multi-stage pipeline</div>
+      </div>
+      <div class="card-body">
+        <canvas id="canny-canvas" height="200"></canvas>
+        <div class="controls">
+          <button class="ctrl-btn active" onclick="setCannyStep(0,this)">1: Smooth</button>
+          <button class="ctrl-btn" onclick="setCannyStep(1,this)">2: Gradient</button>
+          <button class="ctrl-btn" onclick="setCannyStep(2,this)">3: NMS</button>
+          <button class="ctrl-btn" onclick="setCannyStep(3,this)">4: Hysteresis</button>
+        </div>
+        <div id="canny-desc" class="formula" style="min-height:56px"></div>
+        <div class="explain"><strong>John Canny (1986):</strong> Optimal edge detector — maximizes SNR and localization. Hysteresis thresholding links edges using high/low thresholds to avoid breaks.</div>
+        <div class="code-block">
+<span class="var">edges</span> = <span class="fn">cv2.Canny</span>(<span class="var">img</span>, <span class="var">threshold1</span>=<span class="num">100</span>, <span class="var">threshold2</span>=<span class="num">200</span>)
+<span class="cm"># threshold1=low, threshold2=high for hysteresis</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(167,139,250,0.1)">△</div>
+        <div><div class="card-title">Laplacian / LoG</div></div>
+        <div class="card-tag c-purple">2nd derivative</div>
+      </div>
+      <div class="card-body">
+        <canvas id="laplace-canvas" height="160"></canvas>
+        <div class="formula">∇²f = ∂²f/∂x² + ∂²f/∂y²
+
+Laplacian kernel:   LoG combines Gaussian
+ [ 0  1  0]        blur (removes noise)
+ [ 1 -4  1]        then Laplacian.
+ [ 0  1  0]        Zero-crossings = edges</div>
+        <div class="explain"><strong>Sign changes</strong> (zero-crossings) mark edges. More sensitive to noise than Sobel — hence the Laplacian of Gaussian (LoG) pre-smooths first. Useful for blob detection.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ TRANSFORMS ============ -->
+<div class="section" id="transforms">
+  <div class="section-title">Geometric & Frequency Transforms</div>
+  <div class="section-desc">Mapping images between coordinate spaces, and analyzing images in the frequency domain via the Fourier Transform.</div>
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">⟲</div>
+        <div><div class="card-title">Affine & Perspective</div></div>
+        <div class="card-tag c-cyan">geometric</div>
+      </div>
+      <div class="card-body">
+        <canvas id="affine-canvas" height="200"></canvas>
+        <div class="controls">
+          <button class="ctrl-btn active" onclick="setAffine('rotate',this)">Rotate</button>
+          <button class="ctrl-btn" onclick="setAffine('shear',this)">Shear</button>
+          <button class="ctrl-btn" onclick="setAffine('scale',this)">Scale</button>
+          <button class="ctrl-btn" onclick="setAffine('persp',this)">Perspective</button>
+        </div>
+        <div class="formula" id="affine-formula">Affine: [x'] = [a b tx][x]
+        [y']   [c d ty][y]
+                        [1]
+M = cv2.getRotationMatrix2D(center,angle,scale)</div>
+        <div class="explain">Affine = <strong>6 DOF</strong> (translation, rotation, scale, shear) — preserves parallelism. Perspective = <strong>8 DOF</strong> — maps any quadrilateral to another. Requires 3 or 4 point correspondences.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(255,107,53,0.1)">◎</div>
+        <div><div class="card-title">Hough Transform</div></div>
+        <div class="card-tag c-orange">parameter space</div>
+      </div>
+      <div class="card-body">
+        <canvas id="hough-canvas" height="200"></canvas>
+        <div class="formula">Line: ρ = x·cos(θ) + y·sin(θ)
+Each edge pixel votes in (ρ,θ) accumulator.
+Peaks = lines.
+
+cv2.HoughLinesP(edges, rho=1, theta=π/180,
+                threshold=100, minLen=50)</div>
+        <div class="explain"><strong>Accumulator array</strong> (Hough space): every edge pixel draws a sinusoid. Where sinusoids intersect = a real line in image space. Circle Hough is 3D: (cx, cy, r).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(167,139,250,0.1)">∿</div>
+        <div><div class="card-title">Fourier Transform (DFT)</div></div>
+        <div class="card-tag c-purple">frequency domain</div>
+      </div>
+      <div class="card-body">
+        <canvas id="dft-canvas" height="160"></canvas>
+        <div class="slider-row">
+          <span class="slider-label">Freq filter</span>
+          <input type="range" min="5" max="100" value="60" id="dft-slider" oninput="updateDFT()">
+          <span class="slider-val" id="dft-val">60%</span>
+        </div>
+        <div class="formula">F(u,v) = Σ Σ f(x,y)·e^(-j2π(ux/M+vy/N))
+         x y
+dft = cv2.dft(img.astype(np.float32),
+              flags=cv2.DFT_COMPLEX_OUTPUT)</div>
+        <div class="explain"><strong>Low freq</strong> (center) = overall shape/brightness. <strong>High freq</strong> (edges) = fine details and noise. Masking in freq space = convolution in spatial space (convolution theorem).</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ FEATURES ============ -->
+<div class="section" id="features">
+  <div class="section-title">Feature Detection & Description</div>
+  <div class="section-desc">Finding repeatable, distinctive points in images that can be matched across different views, scales, and lighting conditions.</div>
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">◇</div>
+        <div><div class="card-title">Harris Corner Detector</div></div>
+        <div class="card-tag c-cyan">eigenvalue analysis</div>
+      </div>
+      <div class="card-body">
+        <canvas id="harris-canvas" height="200"></canvas>
+        <div class="formula">M = Σ w(x,y)[Ix²  IxIy]   R = det(M) - k·trace(M)²
+           window [IxIy  Iy²]
+
+R > 0 → corner  |R| small → flat  R < 0 → edge
+cv2.cornerHarris(gray, blockSize=2, ksize=3, k=0.04)</div>
+        <div class="explain">Structure tensor M captures local gradient distribution. <strong>Both eigenvalues large</strong> = corner. <strong>One large</strong> = edge. <strong>Both small</strong> = flat. k≈0.04–0.06 (Harris-Stephens empirical).</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(255,107,53,0.1)">⬡</div>
+        <div><div class="card-title">SIFT — Scale Invariant Feature</div></div>
+        <div class="card-tag c-orange">scale & rotation invariant</div>
+      </div>
+      <div class="card-body">
+        <canvas id="sift-canvas" height="200"></canvas>
+        <div class="formula">1. DoG scale-space: D(x,y,σ) = G(kσ)⊛I - G(σ)⊛I
+2. Locate extrema in (x,y,σ) space
+3. Orientation: dominant gradient histogram (36 bins)
+4. 128-D descriptor: 4×4 patches × 8-bin histograms</div>
+        <div class="explain"><strong>DoG</strong> approximates LoG efficiently. Invariant to scale (keypoint size), rotation (orientation assigned), and partially to illumination (normalized descriptor).</div>
+        <div class="code-block">
+<span class="var">sift</span> = <span class="fn">cv2.SIFT_create</span>()
+<span class="var">kp</span>, <span class="var">des</span> = <span class="var">sift</span>.<span class="fn">detectAndCompute</span>(<span class="var">gray</span>, <span class="kw">None</span>)
+<span class="cm"># des shape: (N, 128) — float32 descriptors</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,255,163,0.1)">⬢</div>
+        <div><div class="card-title">ORB — Fast & Free</div></div>
+        <div class="card-tag c-green">binary descriptor</div>
+      </div>
+      <div class="card-body">
+        <canvas id="orb-canvas" height="160"></canvas>
+        <div class="formula">1. FAST keypoints (pixel ring test)
+2. Harris score to top-N
+3. BRIEF: sample pixel pairs → binary string
+4. Steer BRIEF by keypoint orientation
+
+Match: Hamming distance (XOR + popcount)</div>
+        <div class="explain"><strong>~100× faster</strong> than SIFT. 256-bit binary descriptor → Hamming distance matching. Used in real-time SLAM. FAST tests a circle of 16 pixels for corner speed.</div>
+        <div class="code-block">
+<span class="var">orb</span> = <span class="fn">cv2.ORB_create</span>(<span class="var">nfeatures</span>=<span class="num">500</span>)
+<span class="var">kp</span>, <span class="var">des</span> = <span class="var">orb</span>.<span class="fn">detectAndCompute</span>(<span class="var">img</span>, <span class="kw">None</span>)
+<span class="var">bf</span> = <span class="fn">cv2.BFMatcher</span>(<span class="var">cv2.NORM_HAMMING</span>)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ MORPHOLOGY ============ -->
+<div class="section" id="morphology">
+  <div class="section-title">Morphological Operations</div>
+  <div class="section-desc">Set-theory based operations on binary/grayscale images. Built from erosion and dilation as primitives.</div>
+  <div class="section-grid">
+
+    <div class="card" style="grid-column: span 2;">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">◉</div>
+        <div><div class="card-title">Erosion, Dilation & Compound Ops</div></div>
+        <div class="card-tag c-cyan">structuring element</div>
+      </div>
+      <div class="card-body">
+        <div class="controls">
+          <button class="ctrl-btn active" onclick="setMorph('original',this)">Original</button>
+          <button class="ctrl-btn" onclick="setMorph('erode',this)">Erode</button>
+          <button class="ctrl-btn" onclick="setMorph('dilate',this)">Dilate</button>
+          <button class="ctrl-btn" onclick="setMorph('open',this)">Open</button>
+          <button class="ctrl-btn" onclick="setMorph('close',this)">Close</button>
+          <button class="ctrl-btn" onclick="setMorph('gradient',this)">Gradient</button>
+          <button class="ctrl-btn" onclick="setMorph('tophat',this)">Top Hat</button>
+        </div>
+        <canvas id="morph-canvas" height="180"></canvas>
+        <div class="two-col">
+          <div>
+            <div class="formula" id="morph-formula">Original binary image</div>
+            <div class="explain" id="morph-explain">Input binary image. White = foreground, black = background.</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px">OPENCV CODE</div>
+            <div class="code-block" id="morph-code">
+<span class="var">kernel</span> = <span class="fn">cv2.getStructuringElement</span>(<span class="var">cv2.MORPH_RECT</span>, (<span class="num">5</span>,<span class="num">5</span>))</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ COLOR ============ -->
+<div class="section" id="color">
+  <div class="section-title">Color Spaces & Histograms</div>
+  <div class="section-desc">Color representation, space conversions, and histogram equalization for contrast enhancement.</div>
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(255,107,53,0.1)">⬡</div>
+        <div><div class="card-title">Color Space Conversions</div></div>
+        <div class="card-tag c-orange">linear algebra</div>
+      </div>
+      <div class="card-body">
+        <canvas id="color-canvas" height="180"></canvas>
+        <div class="controls">
+          <button class="ctrl-btn active" onclick="setColorSpace('RGB',this)">RGB</button>
+          <button class="ctrl-btn" onclick="setColorSpace('HSV',this)">HSV</button>
+          <button class="ctrl-btn" onclick="setColorSpace('LAB',this)">LAB</button>
+          <button class="ctrl-btn" onclick="setColorSpace('YCrCb',this)">YCrCb</button>
+        </div>
+        <div class="formula" id="color-formula">RGB: device-dependent additive
+R, G, B ∈ [0, 255]
+No perceptual uniformity</div>
+        <div class="explain" id="color-explain">RGB mixes color and luminance. Splitting them allows color-based segmentation regardless of brightness.</div>
+        <div class="code-block">
+<span class="var">hsv</span> = <span class="fn">cv2.cvtColor</span>(<span class="var">img</span>, <span class="var">cv2.COLOR_BGR2HSV</span>)
+<span class="var">lab</span> = <span class="fn">cv2.cvtColor</span>(<span class="var">img</span>, <span class="var">cv2.COLOR_BGR2LAB</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(167,139,250,0.1)">📊</div>
+        <div><div class="card-title">Histogram Equalization</div></div>
+        <div class="card-tag c-purple">CDF remapping</div>
+      </div>
+      <div class="card-body">
+        <canvas id="hist-canvas" height="200"></canvas>
+        <div class="slider-row">
+          <span class="slider-label">CLAHE clip</span>
+          <input type="range" min="1" max="10" value="2" id="clahe-slider" oninput="updateHist()">
+          <span class="slider-val" id="clahe-val">2</span>
+        </div>
+        <div class="formula">s = T(r) = (L-1) · CDF(r)
+CDF(r) = Σ p(k)  for k ≤ r
+
+CLAHE clips histogram at limit before CDF</div>
+        <div class="explain"><strong>CDF remapping</strong> redistributes pixel intensities to fill the full range. CLAHE applies this locally in tiles with clip limit to avoid noise amplification.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ CONTOURS ============ -->
+<div class="section" id="contours">
+  <div class="section-title">Contours & Image Moments</div>
+  <div class="section-desc">Contour finding traces boundaries. Moments provide compact numerical descriptors of shape — area, centroid, orientation.</div>
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">⬭</div>
+        <div><div class="card-title">Image Moments</div></div>
+        <div class="card-tag c-cyan">shape descriptor</div>
+      </div>
+      <div class="card-body">
+        <canvas id="moments-canvas" height="200"></canvas>
+        <div class="formula">M_pq = Σ Σ x^p · y^q · I(x,y)
+        x y
+Area  = M00
+cX    = M10/M00    cY = M01/M00
+Orientation: arctan(2μ11 / (μ20-μ02)) / 2
+
+M = cv2.moments(contour)</div>
+        <div class="explain"><strong>Hu moments</strong> (7 values) are invariant to translation, scale, and rotation — used for shape matching. <strong>Central moments</strong> μ are translation-invariant. cv2.HuMoments(M) returns the 7 Hu descriptors.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,255,163,0.1)">⬡</div>
+        <div><div class="card-title">Contour Algorithms</div></div>
+        <div class="card-tag c-green">topology</div>
+      </div>
+      <div class="card-body">
+        <canvas id="contour-canvas" height="200"></canvas>
+        <div class="formula">Suzuki-Abe algorithm (1985):
+  Traces borders, encodes topology
+  in hierarchy [parent, child, next, prev]
+
+cv2.findContours(binary, cv2.RETR_TREE,
+                 cv2.CHAIN_APPROX_SIMPLE)</div>
+        <div class="explain"><strong>CHAIN_APPROX_SIMPLE</strong> compresses horizontal/vertical/diagonal runs, storing only endpoints. <strong>approxPolyDP</strong> uses Ramer-Douglas-Peucker algorithm to simplify curves with ε tolerance.</div>
+        <div class="code-block">
+<span class="var">cnts</span>, <span class="var">hier</span> = <span class="fn">cv2.findContours</span>(<span class="var">thresh</span>, <span class="var">cv2.RETR_TREE</span>, <span class="var">cv2.CHAIN_APPROX_SIMPLE</span>)
+<span class="var">area</span> = <span class="fn">cv2.contourArea</span>(<span class="var">cnt</span>)
+<span class="var">perim</span> = <span class="fn">cv2.arcLength</span>(<span class="var">cnt</span>, <span class="kw">True</span>)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ OPTICAL FLOW ============ -->
+<div class="section" id="optical">
+  <div class="section-title">Optical Flow</div>
+  <div class="section-desc">Estimating apparent motion of pixels between frames. Fundamental for video analysis, tracking, and SLAM.</div>
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(0,229,255,0.1)">→</div>
+        <div><div class="card-title">Lucas-Kanade (Sparse)</div></div>
+        <div class="card-tag c-cyan">local method</div>
+      </div>
+      <div class="card-body">
+        <canvas id="lk-canvas" height="200"></canvas>
+        <div class="formula">Brightness constancy: I(x,y,t) = I(x+dx,y+dy,t+dt)
+
+∂I/∂x·u + ∂I/∂y·v = -∂I/∂t   → overdetermined
+Solve with least squares in local window:
+[u] = (AᵀA)⁻¹ Aᵀ b   where A = spatial gradients</div>
+        <div class="explain"><strong>Assumes:</strong> brightness constancy, small motion, spatial coherence. <strong>Aperture problem</strong>: only normal flow detectable with 1 equation/pixel. Window provides 2 equations. Fails on large motion → use pyramids.</div>
+        <div class="code-block">
+<span class="var">p1</span>, <span class="var">st</span>, <span class="var">err</span> = <span class="fn">cv2.calcOpticalFlowPyrLK</span>(
+  <span class="var">old_gray</span>, <span class="var">frame_gray</span>, <span class="var">p0</span>, <span class="kw">None</span>,
+  <span class="var">winSize</span>=(<span class="num">15</span>,<span class="num">15</span>), <span class="var">maxLevel</span>=<span class="num">2</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:rgba(255,107,53,0.1)">⇢</div>
+        <div><div class="card-title">Farneback (Dense)</div></div>
+        <div class="card-tag c-orange">global method</div>
+      </div>
+      <div class="card-body">
+        <canvas id="dense-canvas" height="200"></canvas>
+        <div class="formula">Approximate signal locally as polynomial:
+I(x) ≈ xᵀ A x + bᵀx + c
+
+Motion estimated from polynomial coefficients
+between frames via weighted least squares.
+
+Color-code flow: HSV — angle=Hue, mag=Value</div>
+        <div class="explain">Computes flow for <strong>every pixel</strong>. More robust than LK but slower. Visualization: convert (dx,dy) to polar → HSV image where hue encodes direction and brightness encodes speed.</div>
+        <div class="code-block">
+<span class="var">flow</span> = <span class="fn">cv2.calcOpticalFlowFarneback</span>(
+  <span class="var">prev</span>, <span class="var">next</span>, <span class="kw">None</span>,
+  <span class="num">0.5</span>, <span class="num">3</span>, <span class="num">15</span>, <span class="num">3</span>, <span class="num">5</span>, <span class="num">1.2</span>, <span class="num">0</span>)
+<span class="var">mag</span>, <span class="var">ang</span> = <span class="fn">cv2.cartToPolar</span>(<span class="var">flow</span>[...,<span class="num">0</span>], <span class="var">flow</span>[...,<span class="num">1</span>])</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<script>
+// ===================== UTILITIES =====================
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  // Re-draw canvases
+  drawAll();
+}
+
+const C = (id) => document.getElementById(id);
+
+function hexToRGB(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return [r,g,b];
+}
+
+// Generate a simple test image pattern
+function makeTestImage(w, h) {
+  const data = new Uint8ClampedArray(w*h);
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+    const v = Math.sin(x/8)*40 + Math.cos(y/6)*40 + 128 +
+              (Math.abs(x-w/2)<15 && Math.abs(y-h/2)<15 ? 60 : 0) +
+              (Math.abs(x-w/4)<10 && Math.abs(y-h/4)<10 ? -50 : 0);
+    data[y*w+x] = Math.max(0,Math.min(255,v));
+  }
+  return data;
+}
+
+function drawGray(ctx, data, w, h, ox=0, oy=0, dw=null, dh=null) {
+  dw = dw||w; dh = dh||h;
+  const img = ctx.createImageData(w,h);
+  for (let i=0;i<w*h;i++) {
+    const v = data[i]||0;
+    img.data[i*4]=v; img.data[i*4+1]=v; img.data[i*4+2]=v; img.data[i*4+3]=255;
+  }
+  const tmp = document.createElement('canvas'); tmp.width=w; tmp.height=h;
+  tmp.getContext('2d').putImageData(img,0,0);
+  ctx.drawImage(tmp, ox, oy, dw, dh);
+}
+
+function drawRGBA(ctx, data, w, h, ox=0, oy=0, dw=null, dh=null) {
+  dw = dw||w; dh = dh||h;
+  const img = ctx.createImageData(w,h);
+  for (let i=0;i<data.length;i++) img.data[i]=data[i];
+  const tmp = document.createElement('canvas'); tmp.width=w; tmp.height=h;
+  tmp.getContext('2d').putImageData(img,0,0);
+  ctx.drawImage(tmp, ox, oy, dw, dh);
+}
+
+// 2D Gaussian kernel
+function makeGaussianKernel(size, sigma) {
+  const k = new Float32Array(size*size);
+  const half = Math.floor(size/2);
+  let sum = 0;
+  for (let y=0;y<size;y++) for (let x=0;x<size;x++) {
+    const dx=x-half, dy=y-half;
+    k[y*size+x] = Math.exp(-(dx*dx+dy*dy)/(2*sigma*sigma));
+    sum += k[y*size+x];
+  }
+  for (let i=0;i<k.length;i++) k[i]/=sum;
+  return k;
+}
+
+// 2D convolution (grayscale float)
+function convolve2D(img, w, h, kernel, ksize) {
+  const half = Math.floor(ksize/2);
+  const out = new Float32Array(w*h);
+  for (let y=0;y<h;y++) for (let x=0;x<w;x++) {
+    let v=0;
+    for (let ky=0;ky<ksize;ky++) for (let kx=0;kx<ksize;kx++) {
+      const sy=Math.min(h-1,Math.max(0,y+ky-half));
+      const sx=Math.min(w-1,Math.max(0,x+kx-half));
+      v += img[sy*w+sx]*kernel[ky*ksize+kx];
+    }
+    out[y*w+x]=v;
+  }
+  return out;
+}
+
+function clampGray(f) {
+  return new Uint8ClampedArray(f.map(v=>Math.max(0,Math.min(255,v))));
+}
+
+// ===================== CONVOLUTION / FILTERING =====================
+const kernels = {
+  blur: [1/9,1/9,1/9, 1/9,1/9,1/9, 1/9,1/9,1/9],
+  sharpen: [0,-1,0, -1,5,-1, 0,-1,0],
+  edge: [-1,-1,-1, -1,8,-1, -1,-1,-1],
+  emboss: [-2,-1,0, -1,1,1, 0,1,2]
+};
+let activeKernel = 'blur';
+
+function setKernel(name, btn) {
+  activeKernel = name;
+  document.querySelectorAll('#filtering .ctrl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawConv();
+}
+
+function renderKernelGrid(containerId, k, size=3) {
+  const el = C(containerId); if (!el) return;
+  el.style.gridTemplateColumns = `repeat(${size},1fr)`;
+  el.innerHTML = '';
+  const half = Math.floor(size/2);
+  k.forEach((v,i) => {
+    const cell = document.createElement('div');
+    cell.className = 'kernel-cell' + (v>0?' pos':v<0?' neg':' zero') +
+      (i===Math.floor(k.length/2)?' center':'');
+    cell.textContent = Number.isInteger(v) ? v : v.toFixed(2);
+    el.appendChild(cell);
+  });
+}
+
+function drawConv() {
+  const canvas = C('conv-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const iw=80, ih=70;
+  const src = makeTestImage(iw,ih);
+  const k = kernels[activeKernel];
+  const out = convolve2D(src,iw,ih,k,3);
+
+  drawGray(ctx, src, iw, ih, 10, 45, 110, 90);
+  drawGray(ctx, clampGray(out), iw, ih, 200, 45, 110, 90);
+
+  // Labels
+  ctx.fillStyle='#6b6b8a'; ctx.font='11px DM Mono,monospace';
+  ctx.fillText('INPUT', 10, 36); ctx.fillText('OUTPUT', 200, 36);
+
+  // Arrow
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(128,90); ctx.lineTo(192,90); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(186,85); ctx.lineTo(192,90); ctx.lineTo(186,95); ctx.stroke();
+
+  // Kernel label
+  ctx.fillStyle='#00e5ff'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText(activeKernel.toUpperCase(), 143, 120);
+
+  renderKernelGrid('kernel-display', kernels[activeKernel]);
+}
+
+// ===================== GAUSSIAN =====================
+function updateGauss() {
+  const sigma = +C('gauss-sigma').value;
+  C('gauss-val').textContent = sigma;
+  drawGauss(sigma);
+}
+
+function drawGauss(sigma=8) {
+  const canvas = C('gauss-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const iw=80, ih=70;
+  const src = makeTestImage(iw,ih);
+  const ksize=15;
+  const gk = makeGaussianKernel(ksize, sigma/4);
+  const blurred = convolve2D(src,iw,ih,gk,ksize);
+
+  drawGray(ctx, src, iw, ih, 10, 45, 110, 90);
+  drawGray(ctx, clampGray(blurred), iw, ih, 200, 45, 110, 90);
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='11px DM Mono,monospace';
+  ctx.fillText('INPUT', 10, 36); ctx.fillText('BLURRED', 200, 36);
+
+  // Draw Gaussian curve
+  ctx.strokeStyle='#a78bfa'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  const cx=160, cy=100, scale=35;
+  for(let x=-30;x<=30;x++) {
+    const g = Math.exp(-x*x/(2*(sigma/4)*(sigma/4)));
+    const px=cx+x*2, py=cy-g*scale;
+    x===-30 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.fillStyle='#a78bfa'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText(`σ=${sigma/4|0}`, 148, cy+14);
+
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(128,90); ctx.lineTo(148,90); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(172,90); ctx.lineTo(192,90); ctx.stroke();
+}
+
+// ===================== BILATERAL =====================
+function drawBilateral() {
+  const canvas = C('bilateral-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Show side by side: noisy vs filtered
+  const iw=100, ih=80;
+  const src = new Uint8ClampedArray(iw*ih);
+  for(let y=0;y<ih;y++) for(let x=0;x<iw;x++) {
+    const edge = x < iw/2 ? 60 : 200;
+    src[y*iw+x] = edge + (Math.random()-0.5)*40;
+  }
+
+  // Simple bilateral approximation: don't blur across edge
+  const bil = new Float32Array(iw*ih);
+  const spatSig=5, rangeSig=30;
+  for(let y=2;y<ih-2;y++) for(let x=2;x<iw-2;x++) {
+    let sum=0, w=0;
+    const ci = src[y*iw+x];
+    for(let dy=-3;dy<=3;dy++) for(let dx=-3;dx<=3;dx++) {
+      const ni = src[(y+dy)*iw+(x+dx)];
+      const ws = Math.exp(-(dx*dx+dy*dy)/(2*spatSig*spatSig));
+      const wr = Math.exp(-(ci-ni)*(ci-ni)/(2*rangeSig*rangeSig));
+      sum += ni*ws*wr; w += ws*wr;
+    }
+    bil[y*iw+x] = sum/w;
+  }
+
+  drawGray(ctx, src, iw, ih, 10, 45, 130, 100);
+  drawGray(ctx, clampGray(bil), iw, ih, 180, 45, 130, 100);
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='11px DM Mono,monospace';
+  ctx.fillText('NOISY', 10, 38); ctx.fillText('BILATERAL', 180, 38);
+
+  ctx.strokeStyle='#00ffa3'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(144,45); ctx.lineTo(144,145); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(145,90); ctx.lineTo(175,90); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(170,85); ctx.lineTo(175,90); ctx.lineTo(170,95); ctx.stroke();
+}
+
+// ===================== SOBEL =====================
+function drawSobel() {
+  const canvas = C('sobel-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const iw=90, ih=70;
+  const src = makeTestImage(iw,ih);
+
+  const Kx=[-1,0,1,-2,0,2,-1,0,1];
+  const Ky=[-1,-2,-1,0,0,0,1,2,1];
+
+  const Gx=convolve2D(src,iw,ih,Kx,3);
+  const Gy=convolve2D(src,iw,ih,Ky,3);
+  const Gmag=new Float32Array(iw*ih);
+  for(let i=0;i<iw*ih;i++) Gmag[i]=Math.sqrt(Gx[i]*Gx[i]+Gy[i]*Gy[i]);
+  const maxM=Math.max(...Gmag);
+  const Gnorm=Gmag.map(v=>v/maxM*255);
+
+  drawGray(ctx, src, iw, ih, 5, 30, 90, 70);
+  const Gxv=Gx.map(v=>v+128); drawGray(ctx, clampGray(Gxv), iw, ih, 115, 30, 90, 70);
+  const Gyv=Gy.map(v=>v+128); drawGray(ctx, clampGray(Gyv), iw, ih, 115, 115, 90, 70);
+  drawGray(ctx, clampGray(Gnorm), iw, ih, 225, 75, 90, 70);
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('src', 5, 22); ctx.fillText('Gx', 115, 22); ctx.fillText('Gy', 115, 107);
+  ctx.fillStyle='#00e5ff'; ctx.fillText('|G|', 225, 67);
+
+  // Arrows
+  ctx.strokeStyle='rgba(0,229,255,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(99,55); ctx.lineTo(112,45); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(99,55); ctx.lineTo(112,145); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(209,45); ctx.lineTo(222,90); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(209,145); ctx.lineTo(222,110); ctx.stroke();
+
+  renderKernelGrid('sobel-x-kernel', Kx);
+  renderKernelGrid('sobel-y-kernel', Ky);
+}
+
+// ===================== CANNY =====================
+let cannyStep = 0;
+const cannyDescs = [
+  "Step 1: Gaussian smoothing\nRemove noise before gradient computation.\nG(x,y,σ) convolved with image.",
+  "Step 2: Gradient magnitude & direction\nG = √(Gx²+Gy²)  θ = arctan(Gy/Gx)\nQuantize θ to 0°,45°,90°,135°",
+  "Step 3: Non-Maximum Suppression\nFor each pixel, compare to neighbors\nalong gradient direction. Keep only local maxima.",
+  "Step 4: Hysteresis Thresholding\nStrong edges (>T_high) kept.\nWeak edges kept only if connected to strong.\nT_low < pixel < T_high → weak"
+];
+
+function setCannyStep(s, btn) {
+  cannyStep = s;
+  document.querySelectorAll('#edges .controls .ctrl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  C('canny-desc').textContent = cannyDescs[s];
+  drawCanny();
+}
+
+function drawCanny() {
+  const canvas = C('canny-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const iw=120, ih=120;
+  const src = makeTestImage(iw,ih);
+
+  if(cannyStep===0) {
+    // Show gaussian
+    const gk=makeGaussianKernel(9,1.4);
+    const blurred=convolve2D(src,iw,ih,gk,9);
+    drawGray(ctx,src,iw,ih,10,40,130,130);
+    drawGray(ctx,clampGray(blurred),iw,ih,180,40,130,130);
+    ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+    ctx.fillText('original',10,32); ctx.fillText('gaussian',180,32);
+  } else if(cannyStep===1) {
+    const Kx=[-1,0,1,-2,0,2,-1,0,1], Ky=[-1,-2,-1,0,0,0,1,2,1];
+    const gk=makeGaussianKernel(5,1.4);
+    const b=convolve2D(src,iw,ih,gk,5);
+    const Gx=convolve2D(b,iw,ih,Kx,3), Gy=convolve2D(b,iw,ih,Ky,3);
+    const G=new Float32Array(iw*ih);
+    for(let i=0;i<iw*ih;i++) G[i]=Math.sqrt(Gx[i]*Gx[i]+Gy[i]*Gy[i]);
+    const mx=Math.max(...G);
+    drawGray(ctx,G.map(v=>v/mx*255),iw,ih,80,40,160,140);
+    ctx.fillStyle='#00e5ff'; ctx.font='10px DM Mono,monospace';
+    ctx.fillText('gradient magnitude',80,32);
+  } else if(cannyStep===2) {
+    // NMS visualization — show thinned edges
+    const Kx=[-1,0,1,-2,0,2,-1,0,1], Ky=[-1,-2,-1,0,0,0,1,2,1];
+    const gk=makeGaussianKernel(5,1.4);
+    const b=convolve2D(src,iw,ih,gk,5);
+    const Gx=convolve2D(b,iw,ih,Kx,3), Gy=convolve2D(b,iw,ih,Ky,3);
+    const G=new Float32Array(iw*ih), T=new Float32Array(iw*ih);
+    for(let i=0;i<iw*ih;i++) { G[i]=Math.sqrt(Gx[i]*Gx[i]+Gy[i]*Gy[i]); T[i]=Math.atan2(Gy[i],Gx[i])*180/Math.PI; }
+    const nms=new Float32Array(iw*ih);
+    const mx=Math.max(...G);
+    for(let y=1;y<ih-1;y++) for(let x=1;x<iw-1;x++) {
+      const ang=(T[y*iw+x]+180)%180;
+      let n1,n2;
+      if(ang<22.5||ang>=157.5){n1=G[y*iw+x+1];n2=G[y*iw+x-1];}
+      else if(ang<67.5){n1=G[(y+1)*iw+x-1];n2=G[(y-1)*iw+x+1];}
+      else if(ang<112.5){n1=G[(y+1)*iw+x];n2=G[(y-1)*iw+x];}
+      else{n1=G[(y-1)*iw+x-1];n2=G[(y+1)*iw+x+1];}
+      nms[y*iw+x]=(G[y*iw+x]>=n1&&G[y*iw+x]>=n2)?G[y*iw+x]/mx*255:0;
+    }
+    drawGray(ctx,nms,iw,ih,80,40,160,140);
+    ctx.fillStyle='#00ffa3'; ctx.font='10px DM Mono,monospace';
+    ctx.fillText('after NMS (thin edges)',80,32);
+  } else {
+    // Show final edges (thresholded)
+    const Kx=[-1,0,1,-2,0,2,-1,0,1], Ky=[-1,-2,-1,0,0,0,1,2,1];
+    const gk=makeGaussianKernel(5,1.4);
+    const b=convolve2D(src,iw,ih,gk,5);
+    const Gx=convolve2D(b,iw,ih,Kx,3), Gy=convolve2D(b,iw,ih,Ky,3);
+    const G=new Float32Array(iw*ih);
+    for(let i=0;i<iw*ih;i++) G[i]=Math.sqrt(Gx[i]*Gx[i]+Gy[i]*Gy[i]);
+    const mx=Math.max(...G);
+    const strong=new Uint8ClampedArray(iw*ih), weak=new Uint8ClampedArray(iw*ih);
+    for(let i=0;i<iw*ih;i++){
+      const v=G[i]/mx*255;
+      if(v>120) strong[i]=255;
+      else if(v>50) weak[i]=180;
+    }
+    const final=new Uint8ClampedArray(iw*ih);
+    for(let i=0;i<iw*ih;i++) final[i]=strong[i];
+    const rgba=new Uint8ClampedArray(iw*ih*4);
+    for(let i=0;i<iw*ih;i++){
+      rgba[i*4]=strong[i]?255:weak[i]?100:0;
+      rgba[i*4+1]=strong[i]?255:weak[i]?180:0;
+      rgba[i*4+2]=strong[i]?255:weak[i]?100:0;
+      rgba[i*4+3]=255;
+    }
+    drawRGBA(ctx,rgba,iw,ih,80,40,160,140);
+    ctx.fillStyle='#ffd166'; ctx.font='10px DM Mono,monospace';
+    ctx.fillText('hysteresis: cyan=strong,green=weak',5,32);
+  }
+
+  C('canny-desc').textContent = cannyDescs[cannyStep];
+}
+
+// ===================== LAPLACIAN =====================
+function drawLaplace() {
+  const canvas = C('laplace-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+  const iw=90, ih=80;
+  const src=makeTestImage(iw,ih);
+  const Lk=[0,1,0,1,-4,1,0,1,0];
+  const lap=convolve2D(src,iw,ih,Lk,3);
+  const norm=lap.map(v=>v+128);
+  drawGray(ctx,src,iw,ih,10,40,130,100);
+  drawGray(ctx,clampGray(norm),iw,ih,180,40,130,100);
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('original',10,32); ctx.fillText('laplacian',180,32);
+  ctx.strokeStyle='#a78bfa'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(144,90); ctx.lineTo(176,90); ctx.stroke();
+}
+
+// ===================== AFFINE =====================
+let affineMode='rotate';
+function setAffine(mode,btn) {
+  affineMode=mode;
+  document.querySelectorAll('#transforms .controls:first-of-type .ctrl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const formulae = {
+    rotate: `Affine: [x'] = [a b tx][x]
+        [y']   [c d ty][y]
+                        [1]
+M = cv2.getRotationMatrix2D(center,angle,scale)`,
+    shear: `Shear matrix:
+[1  sx 0]   Maps parallelogram
+[sy  1 0]   Affine transform (6 DOF)
+[0   0 1]
+M = np.float32([[1,0.3,0],[0,1,0]])`,
+    scale: `Scale matrix:
+[sx  0 tx]  sx,sy = scale factors
+[0  sy ty]  t = translation
+[0   0  1]
+cv2.resize(img,(w,h),interpolation=...)`,
+    persp: `Perspective (Homography, 8 DOF):
+[x'] = H · [x]   H is 3×3
+[y']       [y]   last elem normalizes
+[w']       [1]
+M=cv2.getPerspectiveTransform(src4,dst4)`
+  };
+  C('affine-formula').textContent=formulae[mode];
+  drawAffine();
+}
+
+function drawAffine() {
+  const canvas=C('affine-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Draw original shape
+  const cx=90, cy=100, sz=45;
+  const pts=[[-1,-1],[1,-1],[1,1],[-1,1]].map(([x,y])=>([cx+x*sz, cy+y*sz]));
+
+  ctx.strokeStyle='#2a2a3d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='rgba(0,229,255,0.08)'; ctx.fill();
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace'; ctx.fillText('src',cx-12,cy+sz+15);
+
+  // Transformed shape
+  const t = Date.now()/1000;
+  let tpts;
+  if(affineMode==='rotate') {
+    const ang=Math.PI/4;
+    tpts=pts.map(([x,y])=>{
+      const rx=cx+200, ry=cy;
+      const lx=x-cx, ly=y-cy;
+      return [rx+lx*Math.cos(ang)-ly*Math.sin(ang), ry+lx*Math.sin(ang)+ly*Math.cos(ang)];
+    });
+  } else if(affineMode==='shear') {
+    tpts=pts.map(([x,y])=>[x+200+0.5*(y-cy), y]);
+  } else if(affineMode==='scale') {
+    tpts=pts.map(([x,y])=>[200+cx+(x-cx)*1.4, cy+(y-cy)*0.7]);
+  } else { // perspective
+    const off=[[30,-20],[10,-20],[-5,25],[25,25]];
+    tpts=pts.map(([x,y],i)=>[x+200+off[i][0], y+off[i][1]]);
+  }
+
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); tpts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y)); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='rgba(0,229,255,0.12)'; ctx.fill();
+  ctx.fillStyle='#00e5ff'; ctx.font='10px DM Mono,monospace'; ctx.fillText('dst',tpts[0][0]-12,tpts[2][1]+15);
+
+  // Arrow
+  ctx.strokeStyle='rgba(255,107,53,0.6)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(cx+sz+5,cy); ctx.lineTo(200+cx-sz-5,cy); ctx.stroke();
+  ctx.fillStyle='rgba(255,107,53,0.6)'; ctx.font='10px DM Mono',monospace;
+  ctx.fillText(affineMode.toUpperCase(), 148, cy-5);
+
+  // Correspondence dots
+  pts.forEach(([x,y],i)=>{
+    ctx.strokeStyle='rgba(255,107,53,0.3)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(tpts[i][0],tpts[i][1]); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#ff6b35'; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#00e5ff'; ctx.beginPath(); ctx.arc(tpts[i][0],tpts[i][1],3,0,Math.PI*2); ctx.fill();
+  });
+}
+
+// ===================== HOUGH =====================
+function drawHough() {
+  const canvas=C('hough-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Left: image with lines
+  ctx.fillStyle='#1a1a26'; ctx.fillRect(5,30,130,150);
+  const lines=[{x1:20,y1:60,x2:120,y2:80},{x1:20,y1:120,x2:120,y2:140},{x1:70,y1:35,x2:80,y2:170}];
+  lines.forEach((l,i)=>{
+    ctx.strokeStyle=['#00e5ff','#a78bfa','#00ffa3'][i]; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(l.x1,l.y1+30); ctx.lineTo(l.x2,l.y2+30); ctx.stroke();
+  });
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace'; ctx.fillText('image space',8,22);
+
+  // Right: Hough accumulator
+  ctx.fillStyle='#0d0d16'; ctx.fillRect(140,30,175,150);
+  const rhoMax=160, thetaN=60;
+  const acc=new Float32Array(thoN=>(rhoMax*2)*thoN);
+  // Vote for each line's points
+  lines.forEach(l=>{
+    const steps=20;
+    for(let s=0;s<=steps;s++){
+      const x=l.x1+(l.x2-l.x1)*s/steps;
+      const y=l.y1+(l.y2-l.y1)*s/steps;
+      for(let ti=0;ti<thetaN;ti++){
+        const theta=ti*Math.PI/thetaN;
+        const rho=x*Math.cos(theta)+y*Math.sin(theta);
+        const ri=Math.round(rho+rhoMax);
+        if(ri>=0&&ri<rhoMax*2) acc[ri*thetaN+ti]++;
+      }
+    }
+  });
+  const maxAcc=Math.max(...acc);
+  for(let ri=0;ri<rhoMax*2;ri++) for(let ti=0;ti<thetaN;ti++){
+    const v=acc[ri*thetaN+ti]/maxAcc;
+    if(v>0.1){
+      const px=140+ti/thetaN*175, py=30+ri/(rhoMax*2)*150;
+      ctx.fillStyle=`rgba(0,229,255,${v*0.8})`; ctx.fillRect(px-1,py-1,3,3);
+    }
+  }
+  ctx.strokeStyle='rgba(255,107,53,0.7)'; ctx.lineWidth=1.5;
+  // Mark peaks crudely
+  [{x:0.05,y:0.35},{x:0.05,y:0.58},{x:0.48,y:0.5}].forEach(p=>{
+    const px=140+p.x*175, py=30+p.y*150;
+    ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.stroke();
+  });
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('(ρ,θ) space   ◯=peaks=lines',140,22);
+
+  // Labels
+  ctx.fillStyle='#a78bfa'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('θ→',280,22); ctx.fillText('ρ↓',140,45);
+
+  function thoN(x){return x;}
+}
+
+// ===================== DFT =====================
+function updateDFT() {
+  const v=+C('dft-slider').value;
+  C('dft-val').textContent=v+'%';
+  drawDFT(v);
+}
+
+function drawDFT(pct=60) {
+  const canvas=C('dft-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Draw simple signal and its "spectrum"
+  const N=128;
+  const sig=new Float32Array(N);
+  for(let i=0;i<N;i++) sig[i]=Math.sin(2*Math.PI*3*i/N)*0.5+Math.sin(2*Math.PI*8*i/N)*0.3+Math.sin(2*Math.PI*20*i/N)*0.2;
+
+  // Draw original
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const x=5+i*(150/N), y=50-sig[i]*30;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+
+  // Fake spectrum bars
+  const freqs=[3,8,20,35,50];
+  const amps=[0.5,0.3,0.2,0.08,0.05];
+  const cutoff=pct/100*50;
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('|F(ω)|',165,20);
+  freqs.forEach((f,i)=>{
+    const x=165+f*3, h=amps[i]*120;
+    const kept=f<=cutoff;
+    ctx.fillStyle=kept?'#00e5ff':'rgba(255,107,53,0.4)';
+    ctx.fillRect(x-3,80-h,6,h);
+  });
+  ctx.strokeStyle='#ff6b35'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(165+cutoff*3,10); ctx.lineTo(165+cutoff*3,100); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#ff6b35'; ctx.font='9px DM Mono,monospace'; ctx.fillText('cutoff',165+cutoff*3+3,15);
+
+  // Filtered signal
+  ctx.strokeStyle='#00ffa3'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  for(let i=0;i<N;i++){
+    const s=Math.sin(2*Math.PI*3*i/N)*0.5*(3<=cutoff?1:0)+
+            Math.sin(2*Math.PI*8*i/N)*0.3*(8<=cutoff?1:0)+
+            Math.sin(2*Math.PI*20*i/N)*0.2*(20<=cutoff?1:0);
+    const x=5+i*(150/N), y=130-s*30;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('original',5,12); ctx.fillText('filtered',5,115);
+}
+
+// ===================== HARRIS =====================
+function drawHarris() {
+  const canvas=C('harris-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const iw=140, ih=140;
+  const src=makeTestImage(iw,ih);
+  drawGray(ctx,src,iw,ih,10,30,140,140);
+
+  // Compute simple Harris response
+  const Kx=[-1,0,1,-2,0,2,-1,0,1], Ky=[-1,-2,-1,0,0,0,1,2,1];
+  const Gx=convolve2D(src,iw,ih,Kx,3), Gy=convolve2D(src,iw,ih,Ky,3);
+  const k=0.04;
+  const corners=[];
+  const blurK=makeGaussianKernel(5,1);
+  const Ixx=convolve2D(Gx.map((v,i)=>v*v),iw,ih,blurK,5);
+  const Iyy=convolve2D(Gy.map((v,i)=>v*v),iw,ih,blurK,5);
+  const Ixy=convolve2D(Gx.map((v,i)=>v*Gy[i]),iw,ih,blurK,5);
+  for(let y=5;y<ih-5;y+=8) for(let x=5;x<iw-5;x+=8) {
+    const det=Ixx[y*iw+x]*Iyy[y*iw+x]-Ixy[y*iw+x]*Ixy[y*iw+x];
+    const trace=Ixx[y*iw+x]+Iyy[y*iw+x];
+    const R=det-k*trace*trace;
+    if(R>200000) corners.push({x,y,R});
+  }
+
+  corners.forEach(c=>{
+    const px=10+c.x/iw*140, py=30+c.y/ih*140;
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.rect(px-5,py-5,10,10); ctx.stroke();
+  });
+
+  // R map visualization
+  ctx.fillStyle='#1a1a26'; ctx.fillRect(160,30,150,140);
+  for(let y=5;y<ih-5;y+=3) for(let x=5;x<iw-5;x+=3) {
+    const det=Ixx[y*iw+x]*Iyy[y*iw+x]-Ixy[y*iw+x]*Ixy[y*iw+x];
+    const trace=Ixx[y*iw+x]+Iyy[y*iw+x];
+    const R=det-k*trace*trace;
+    const px=160+x/iw*150, py=30+y/ih*140;
+    if(R>50000) { ctx.fillStyle='rgba(255,107,53,0.8)'; ctx.fillRect(px,py,2,2); }
+    else if(R<-50000) { ctx.fillStyle='rgba(0,229,255,0.6)'; ctx.fillRect(px,py,2,2); }
+  }
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('corners marked',10,22);
+  ctx.fillStyle='#ff6b35'; ctx.fillText('R>0: corner',160,22);
+  ctx.fillStyle='#00e5ff'; ctx.fillText('R<0: edge',220,22);
+}
+
+// ===================== SIFT Visualization =====================
+function drawSIFT() {
+  const canvas=C('sift-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Show scale space octaves
+  const iw=60, ih=50;
+  const src=makeTestImage(iw,ih);
+  const sigmas=[1,1.6,2.2,3.2];
+  sigmas.forEach((s,i)=>{
+    const gk=makeGaussianKernel(9,s);
+    const bl=convolve2D(src,iw,ih,gk,9);
+    const sc=1-i*0.15;
+    const sw=iw*sc, sh=ih*sc;
+    const ox=8+i*70, oy=25;
+    drawGray(ctx,clampGray(bl),iw,ih,ox,oy,sw|0,sh|0);
+    ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText(`σ=${s}`,ox,oy-4);
+  });
+
+  // DoG
+  ctx.fillStyle='#2a2a3d'; ctx.fillRect(5,110,280,10);
+  ctx.fillStyle='rgba(255,107,53,0.3)'; ctx.fillRect(5,120,85,50);
+  for(let i=0;i<3;i++){
+    const gk1=makeGaussianKernel(9,sigmas[i]);
+    const gk2=makeGaussianKernel(9,sigmas[i+1]);
+    const b1=convolve2D(src,iw,ih,gk1,9);
+    const b2=convolve2D(src,iw,ih,gk2,9);
+    const dog=new Float32Array(iw*ih);
+    for(let j=0;j<iw*ih;j++) dog[j]=(b2[j]-b1[j])+128;
+    drawGray(ctx,clampGray(dog),iw,ih,8+i*90,122,70,55);
+    ctx.fillStyle='#ff6b35'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText(`DoG${i+1}`,8+i*90,118);
+  }
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('scale-space (blur octave)',8,16);
+  ctx.fillText('DoG = difference of Gaussians',8,110);
+
+  // Keypoint circles (fake)
+  const kpts=[{x:80,y:55,r:12},{x:180,y:45,r:18},{x:220,y:60,r:8}];
+  kpts.forEach(k=>{
+    ctx.strokeStyle='#00ffa3'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(k.x,k.y,k.r,0,Math.PI*2); ctx.stroke();
+    // orientation line
+    ctx.beginPath(); ctx.moveTo(k.x,k.y); ctx.lineTo(k.x+k.r,k.y); ctx.stroke();
+  });
+}
+
+// ===================== ORB =====================
+function drawORB() {
+  const canvas=C('orb-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=160;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Show FAST ring test
+  const cx=60, cy=80, r=20;
+  ctx.strokeStyle='#2a2a3d'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+
+  const n=16;
+  for(let i=0;i<n;i++){
+    const a=2*Math.PI*i/n;
+    const px=cx+r*Math.cos(a), py=cy+r*Math.sin(a);
+    const isCorner = i<4||i===8||i===9;
+    ctx.fillStyle=isCorner?'#00e5ff':'#ff6b35';
+    ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle='#ffd166'; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('FAST ring (16px)',8,18);
+  ctx.fillStyle='#00e5ff'; ctx.fillText('bright',8,32);
+  ctx.fillStyle='#ff6b35'; ctx.fillText('dark',60,32);
+  ctx.fillStyle='#ffd166'; ctx.fillText('candidate',110,32);
+
+  // BRIEF descriptor visualization
+  ctx.fillStyle='#1a1a26'; ctx.fillRect(130,30,180,120);
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('BRIEF: 256-bit binary',132,22);
+
+  const bits=64;
+  for(let i=0;i<bits;i++){
+    const x=132+(i%32)*5, y=38+Math.floor(i/32)*20;
+    const b=Math.random()>0.5;
+    ctx.fillStyle=b?'#00e5ff':'#2a2a3d';
+    ctx.fillRect(x,y,4,4);
+  }
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('Hamming distance for matching',132,135);
+}
+
+// ===================== MORPHOLOGY =====================
+let morphMode='original';
+function setMorph(mode,btn) {
+  morphMode=mode;
+  document.querySelectorAll('#morphology .ctrl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const info = {
+    original:{f:'binary image (input)',e:'White=foreground. Kernel (structuring element) defines neighborhood shape.',c:'kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))'},
+    erode:{f:'Erosion: B(x)=1 if K fits entirely in B\nShrinks bright regions, removes small noise',e:'Every pixel = min in kernel window. Removes thin connections, boundary pixels.',c:'cv2.erode(img, kernel, iterations=1)'},
+    dilate:{f:'Dilation: B(x)=1 if K touches B\nGrows bright regions, fills gaps',e:'Every pixel = max in kernel window. Bridges gaps, grows boundaries.',c:'cv2.dilate(img, kernel, iterations=1)'},
+    open:{f:'Opening = Erosion → Dilation\nRemoves noise, keeps shape',e:'Removes small bright dots (noise) outside objects without changing object size.',c:'cv2.morphologyEx(img, cv2.MORPH_OPEN, kernel)'},
+    close:{f:'Closing = Dilation → Erosion\nFills holes, connects gaps',e:'Fills small dark holes inside objects and closes narrow gaps.',c:'cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)'},
+    gradient:{f:'Gradient = Dilation - Erosion\nOutline of objects',e:'Highlights boundary of foreground regions. Equivalent to thick edge detection.',c:'cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)'},
+    tophat:{f:'Top Hat = src - Opening\nBright spots on dark background',e:'Extracts peaks smaller than structuring element. Used for non-uniform illumination.',c:'cv2.morphologyEx(img, cv2.MORPH_TOPHAT, kernel)'}
+  };
+  C('morph-formula').textContent=info[mode].f;
+  C('morph-explain').textContent=info[mode].e;
+  C('morph-code').innerHTML=`<span class="var">kernel</span> = <span class="fn">cv2.getStructuringElement</span>(<span class="var">cv2.MORPH_RECT</span>, (<span class="num">5</span>,<span class="num">5</span>))\n<span class="var">result</span> = <span class="fn">${info[mode].c}</span>`;
+  drawMorph();
+}
+
+function makeBinary(w,h) {
+  const d=new Uint8ClampedArray(w*h);
+  // Shapes
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
+    const inRect=(x>10&&x<30&&y>10&&y<40);
+    const inCirc=Math.sqrt((x-55)**2+(y-25)**2)<18;
+    const inRect2=(x>75&&x<100&&y>10&&y<40);
+    // noise dot
+    const noise=(x>40&&x<50&&y>45&&y<50);
+    // hole: leave gap in rect
+    const gap=(x>20&&x<25&&y>20&&y<30);
+    if((inRect||inCirc||inRect2||noise)&&!gap) d[y*w+x]=255;
+  }
+  return d;
+}
+
+function morphOp(src, w, h, op) {
+  const out=new Uint8ClampedArray(w*h);
+  const ks=5, half=2;
+  for(let y=half;y<h-half;y++) for(let x=half;x<w-half;x++) {
+    let mn=255,mx=0;
+    for(let dy=-half;dy<=half;dy++) for(let dx=-half;dx<=half;dx++){
+      const v=src[(y+dy)*w+(x+dx)];
+      if(v<mn)mn=v; if(v>mx)mx=v;
+    }
+    if(op==='erode') out[y*w+x]=mn;
+    else if(op==='dilate') out[y*w+x]=mx;
+    else out[y*w+x]=src[y*w+x];
+  }
+  return out;
+}
+
+function drawMorph() {
+  const canvas=C('morph-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=180;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const iw=110, ih=60;
+  const src=makeBinary(iw,ih);
+  let result;
+  if(morphMode==='original') result=src;
+  else if(morphMode==='erode') result=morphOp(src,iw,ih,'erode');
+  else if(morphMode==='dilate') result=morphOp(src,iw,ih,'dilate');
+  else if(morphMode==='open') result=morphOp(morphOp(src,iw,ih,'erode'),iw,ih,'dilate');
+  else if(morphMode==='close') result=morphOp(morphOp(src,iw,ih,'dilate'),iw,ih,'erode');
+  else if(morphMode==='gradient') {
+    const er=morphOp(src,iw,ih,'erode'), dl=morphOp(src,iw,ih,'dilate');
+    result=new Uint8ClampedArray(iw*ih).map((_,i)=>Math.abs(dl[i]-er[i]));
+  } else if(morphMode==='tophat') {
+    const opened=morphOp(morphOp(src,iw,ih,'erode'),iw,ih,'dilate');
+    result=new Uint8ClampedArray(iw*ih).map((_,i)=>Math.max(0,src[i]-opened[i]));
+  }
+
+  drawGray(ctx,src,iw,ih,10,60,130,100);
+  drawGray(ctx,result,iw,ih,180,60,130,100);
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+  ctx.fillText('input',10,52); ctx.fillText(morphMode,180,52);
+
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(144,110); ctx.lineTo(176,110); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(171,105); ctx.lineTo(176,110); ctx.lineTo(171,115); ctx.stroke();
+}
+
+// ===================== COLOR =====================
+let colorSpace='RGB';
+function setColorSpace(cs, btn) {
+  colorSpace=cs;
+  document.querySelectorAll('#color .controls .ctrl-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const info={
+    RGB:{f:'RGB: device-dependent additive\nR, G, B ∈ [0, 255]\nNo perceptual uniformity',e:'RGB mixes color and luminance. Hard to segment by color robustly.'},
+    HSV:{f:'HSV: Hue (color), Saturation, Value(bright)\nH ∈ [0,180]  S,V ∈ [0,255]\ncv2.cvtColor(img, cv2.COLOR_BGR2HSV)',e:'Hue separates from brightness. Ideal for color-based segmentation using inRange().'},
+    LAB:{f:'L*a*b*: L=lightness, a=green↔red, b=blue↔yellow\nPerceptually uniform (ΔE = perceived diff)\ncv2.cvtColor(img, cv2.COLOR_BGR2LAB)',e:'Best for perceptual color comparison. Used in computational photography and color transfer.'},
+    YCrCb:{f:'Y=luma, Cr=red chroma, Cb=blue chroma\nY  = 0.299R + 0.587G + 0.114B\ncv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)',e:'Separates luminance from chrominance. Used in face detection (skin tone in Cr/Cb).'}
+  };
+  C('color-formula').textContent=info[cs].f;
+  C('color-explain').textContent=info[cs].e;
+  drawColor();
+}
+
+function drawColor() {
+  const canvas=C('color-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=180;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  if(colorSpace==='HSV') {
+    // HSV wheel
+    const cx=80, cy=95, r=65;
+    for(let a=0;a<360;a+=1){
+      const rad=a*Math.PI/180;
+      for(let d=0;d<r;d++){
+        const s=d/r;
+        const h=a/360;
+        const [rv,gv,bv]=hsvToRgb(h,s,1);
+        ctx.strokeStyle=`rgb(${rv},${gv},${bv})`;
+        ctx.beginPath();
+        ctx.moveTo(cx+(d-1)*Math.cos(rad),cy+(d-1)*Math.sin(rad));
+        ctx.lineTo(cx+d*Math.cos(rad),cy+d*Math.sin(rad));
+        ctx.stroke();
+      }
+    }
+    ctx.fillStyle='#fff'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText('H=0°',cx+r+3,cy); ctx.fillText('H=90°',cx-10,cy-r-5);
+    ctx.fillStyle='#6b6b8a'; ctx.fillText('HSV wheel',10,18);
+
+    // Value strip
+    for(let i=0;i<100;i++){
+      const [rv,gv,bv]=hsvToRgb(0.6,1,i/100);
+      ctx.fillStyle=`rgb(${rv},${gv},${bv})`;
+      ctx.fillRect(180+i,40,1,30);
+    }
+    ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText('Value 0→1',180,35);
+
+    for(let i=0;i<100;i++){
+      const [rv,gv,bv]=hsvToRgb(0.6,i/100,1);
+      ctx.fillStyle=`rgb(${rv},${gv},${bv})`;
+      ctx.fillRect(180+i,90,1,30);
+    }
+    ctx.fillText('Saturation 0→1',180,85);
+
+  } else if(colorSpace==='LAB') {
+    // a*b* plane
+    const cx=90, cy=95, sc=0.5;
+    for(let a=-80;a<80;a+=3) for(let b=-80;b<80;b+=3){
+      const [r,g,bv]=labToRgb(60,a,b);
+      if(r>=0&&r<=255&&g>=0&&g<=255&&bv>=0&&bv<=255){
+        ctx.fillStyle=`rgb(${r|0},${g|0},${bv|0})`;
+        ctx.fillRect(cx+a*sc,cy+b*sc,3,3);
+      }
+    }
+    ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx-42,cy); ctx.lineTo(cx+42,cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-42); ctx.lineTo(cx,cy+42); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText('a*',cx+43,cy+3); ctx.fillText('b*',cx+3,cy-43);
+    ctx.fillStyle='#6b6b8a'; ctx.fillText('a*b* plane (L=60)',10,18);
+
+    for(let i=0;i<100;i++){
+      const L=i*1.0;
+      const v=L*2.55|0;
+      ctx.fillStyle=`rgb(${v},${v},${v})`;
+      ctx.fillRect(200+i,40,1,30);
+    }
+    ctx.fillText('L* (lightness)',200,35);
+
+  } else if(colorSpace==='YCrCb') {
+    // Show Cr/Cb skin detection zone
+    ctx.fillStyle='#1a1a26'; ctx.fillRect(10,30,140,140);
+    for(let cr=0;cr<140;cr++) for(let cb=0;cb<140;cb++){
+      const CrVal=cr+80, CbVal=cb+80;
+      const [r,g,b]=ycrcbToRgb(120,CrVal,CbVal);
+      const inSkin=(CrVal>133&&CrVal<173&&CbVal>77&&CbVal<127);
+      ctx.fillStyle=inSkin?`rgba(${r|0},${g|0},${b|0},0.9)`:`rgba(${r|0},${g|0},${b|0},0.3)`;
+      ctx.fillRect(10+cr,30+cb,1,1);
+    }
+    ctx.strokeStyle='#ffd166'; ctx.lineWidth=1.5;
+    ctx.strokeRect(10+53,30+0,40,47);
+    ctx.fillStyle='#ffd166'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText('skin zone',10+56,30+55);
+    ctx.fillStyle='#6b6b8a'; ctx.fillText('Cr/Cb plane',10,22);
+
+    for(let i=0;i<100;i++){
+      const [r,g,b]=ycrcbToRgb(i*2.55|0,128,128);
+      ctx.fillStyle=`rgb(${r|0},${g|0},${b|0})`;
+      ctx.fillRect(180+i,40,1,30);
+    }
+    ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+    ctx.fillText('Y (luma)',180,35);
+  } else {
+    // RGB cube corner view
+    const gradients=[['#ff0000','#ff00ff','#0000ff','#00ffff','#00ff00','#ffff00','#ff0000']];
+    const g=ctx.createLinearGradient(10,0,310,0);
+    g.addColorStop(0,'#ff0000'); g.addColorStop(0.16,'#ff00ff');
+    g.addColorStop(0.33,'#0000ff'); g.addColorStop(0.5,'#00ffff');
+    g.addColorStop(0.66,'#00ff00'); g.addColorStop(0.83,'#ffff00');
+    g.addColorStop(1,'#ff0000');
+    ctx.fillStyle=g; ctx.fillRect(10,40,300,60);
+    // Overlay with black→white
+    const g2=ctx.createLinearGradient(10,0,10,200);
+    g2.addColorStop(0,'rgba(0,0,0,0)'); g2.addColorStop(1,'rgba(0,0,0,0.7)');
+    ctx.fillStyle=g2; ctx.fillRect(10,40,300,60);
+    ctx.fillStyle='#6b6b8a'; ctx.font='10px DM Mono,monospace';
+    ctx.fillText('RGB hue spectrum',10,32);
+
+    // R G B channels separately
+    for(let i=0;i<100;i++){
+      ctx.fillStyle=`rgb(${i*2.55|0},0,0)`; ctx.fillRect(10+i*2,120,2,25);
+      ctx.fillStyle=`rgb(0,${i*2.55|0},0)`; ctx.fillRect(10+i*2,152,2,25);
+      ctx.fillStyle=`rgb(0,0,${i*2.55|0})`; ctx.fillRect(10+i*2,184,2,20);
+    }
+    ctx.fillStyle='#ff6060'; ctx.fillText('R',215,115);
+    ctx.fillStyle='#60ff60'; ctx.fillText('G',215,148);
+    ctx.fillStyle='#6060ff'; ctx.fillText('B',215,180);
+  }
+}
+
+function hsvToRgb(h,s,v){
+  const i=Math.floor(h*6), f=h*6-i, p=v*(1-s), q=v*(1-f*s), t=v*(1-(1-f)*s);
+  let r,g,b;
+  switch(i%6){case 0:r=v;g=t;b=p;break;case 1:r=q;g=v;b=p;break;case 2:r=p;g=v;b=t;break;case 3:r=p;g=q;b=v;break;case 4:r=t;g=p;b=v;break;case 5:r=v;g=p;b=q;break;}
+  return [r*255,g*255,b*255];
+}
+
+function labToRgb(L,a,b){
+  let y=(L+16)/116, x=a/500+y, z=y-b/200;
+  x=0.95047*(x*x*x>0.008856?x*x*x:(x-16/116)/7.787);
+  y=1.00000*(y*y*y>0.008856?y*y*y:(y-16/116)/7.787);
+  z=1.08883*(z*z*z>0.008856?z*z*z:(z-16/116)/7.787);
+  let r=x*3.2406+y*-1.5372+z*-0.4986;
+  let g=x*-0.9689+y*1.8758+z*0.0415;
+  let bv=x*0.0557+y*-0.2040+z*1.0570;
+  r=r>0.0031308?1.055*Math.pow(r,1/2.4)-0.055:12.92*r;
+  g=g>0.0031308?1.055*Math.pow(g,1/2.4)-0.055:12.92*g;
+  bv=bv>0.0031308?1.055*Math.pow(bv,1/2.4)-0.055:12.92*bv;
+  return [r*255,g*255,bv*255];
+}
+
+function ycrcbToRgb(Y,Cr,Cb){
+  const r=Y+1.403*(Cr-128);
+  const g=Y-0.344*(Cb-128)-0.714*(Cr-128);
+  const b=Y+1.773*(Cb-128);
+  return [r,g,b];
+}
+
+// ===================== HISTOGRAM =====================
+function updateHist() {
+  const clip=+C('clahe-slider').value;
+  C('clahe-val').textContent=clip;
+  drawHist(clip);
+}
+
+function drawHist(clip=2) {
+  const canvas=C('hist-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Fake histogram
+  const hist=new Array(64).fill(0);
+  for(let i=0;i<64;i++) hist[i]=Math.exp(-((i-20)**2)/150)*200+Math.exp(-((i-45)**2)/80)*120;
+  const maxH=Math.max(...hist);
+
+  const clipH=clip/10*maxH;
+
+  // Draw original histogram
+  for(let i=0;i<64;i++){
+    const x=10+i*3, h=hist[i]/maxH*80;
+    ctx.fillStyle='rgba(167,139,250,0.6)'; ctx.fillRect(x,95-h,2,h);
+  }
+  // Clip line
+  ctx.strokeStyle='#ff6b35'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  const clipY=95-clipH/maxH*80;
+  ctx.beginPath(); ctx.moveTo(10,clipY); ctx.lineTo(202,clipY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#ff6b35'; ctx.font='9px DM Mono,monospace'; ctx.fillText('clip',205,clipY+3);
+
+  // Equalized (CDF) histogram — roughly uniform
+  for(let i=0;i<64;i++){
+    const x=10+i*3, h=40;
+    ctx.fillStyle='rgba(0,229,255,0.4)'; ctx.fillRect(x,160-h,2,h);
+  }
+
+  // CDF curves
+  let cum=0;
+  ctx.strokeStyle='#00ffa3'; ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let i=0;i<64;i++){
+    cum+=hist[i]; const x=10+i*3, y=170-cum/(64*maxH)*60;
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('original histogram',10,15);
+  ctx.fillStyle='#a78bfa'; ctx.fillRect(135,8,8,8); ctx.fillStyle='#6b6b8a'; ctx.fillText('hist',145,15);
+  ctx.fillText('equalized (CLAHE)',10,125);
+  ctx.fillStyle='#00e5ff'; ctx.fillRect(135,118,8,8); ctx.fillStyle='#6b6b8a'; ctx.fillText('uniform',145,125);
+  ctx.fillStyle='#00ffa3'; ctx.fillText('CDF →',10,170);
+}
+
+// ===================== MOMENTS =====================
+function drawMoments() {
+  const canvas=C('moments-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Draw a simple tilted ellipse
+  ctx.save(); ctx.translate(100,100); ctx.rotate(Math.PI/5);
+  ctx.fillStyle='rgba(0,229,255,0.15)';
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(0,0,55,25,0,0,Math.PI*2); ctx.fill(); ctx.stroke();
+
+  // Centroid
+  ctx.fillStyle='#ff6b35'; ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+
+  // Principal axes
+  ctx.strokeStyle='#ffd166'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(-55,0); ctx.lineTo(55,0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,-25); ctx.lineTo(0,25); ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle='#ff6b35'; ctx.font='9px DM Mono,monospace'; ctx.fillText('centroid (cx,cy)',108,95);
+  ctx.fillStyle='#ffd166'; ctx.fillText('principal axes',60,148);
+  ctx.fillStyle='#00e5ff'; ctx.fillText('θ=arctan(2μ11/(μ20-μ02))/2',60,163);
+
+  // Stats panel
+  const stats=[['M00 (area)','2734'],['cX','100'],['cY','100'],['orientation','36°'],['Hu₁ (scale-inv)','0.1534']];
+  stats.forEach(([k,v],i)=>{
+    ctx.fillStyle='rgba(255,255,255,0.05)'; ctx.fillRect(190,30+i*32,120,28);
+    ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace'; ctx.fillText(k,195,45+i*32);
+    ctx.fillStyle='#00e5ff'; ctx.font='10px DM Mono,monospace'; ctx.fillText(v,195,57+i*32);
+  });
+}
+
+// ===================== CONTOURS =====================
+function drawContours() {
+  const canvas=C('contour-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // Binary image with shapes
+  ctx.fillStyle='#222'; ctx.fillRect(10,20,130,160);
+
+  // Draw white shapes
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.beginPath(); ctx.ellipse(45,75,25,35,0.2,0,Math.PI*2); ctx.fill();
+  ctx.fillRect(70,50,40,60);
+  ctx.beginPath(); ctx.arc(90,140,20,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace'; ctx.fillText('binary',10,14);
+
+  // Contour overlay
+  ctx.fillStyle='#222'; ctx.fillRect(155,20,155,160);
+  // Trace ellipse
+  ctx.strokeStyle='#00e5ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(45+145,75,25,35,0.2,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='#a78bfa';
+  ctx.beginPath(); ctx.rect(70+145,50,40,60); ctx.stroke();
+  ctx.strokeStyle='#00ffa3';
+  ctx.beginPath(); ctx.arc(90+145,140,20,0,Math.PI*2); ctx.stroke();
+
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace'; ctx.fillText('contours',155,14);
+
+  // Poly approx
+  const polyPts=[[155,70],[170,45],[200,48],[215,72],[205,95],[175,98]];
+  ctx.strokeStyle='#ff6b35'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+  ctx.beginPath(); polyPts.forEach(([x,y],i)=>i?ctx.lineTo(x+3,y+3):ctx.moveTo(x+3,y+3)); ctx.closePath(); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#ff6b35'; ctx.font='8px DM Mono,monospace'; ctx.fillText('approxPolyDP',155,190);
+}
+
+// ===================== LUCAS-KANADE =====================
+let lkFrame=0;
+function drawLK() {
+  const canvas=C('lk-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  const t=lkFrame*0.04;
+
+  // Frame 1: tracked points
+  ctx.fillStyle='#1a1a26'; ctx.fillRect(10,20,135,160);
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace'; ctx.fillText('frame t',10,14);
+
+  const pts=[{x:50,y:60,vx:3,vy:1},{x:90,y:90,vx:-2,vy:3},{x:60,y:130,vx:4,vy:-1},{x:100,y:50,vx:1,vy:2}];
+
+  pts.forEach(p=>{
+    ctx.fillStyle='#00ffa3'; ctx.beginPath(); ctx.arc(p.x+10,p.y+20,4,0,Math.PI*2); ctx.fill();
+    // Window rect
+    ctx.strokeStyle='rgba(0,255,163,0.4)'; ctx.lineWidth=1;
+    ctx.strokeRect(p.x+10-10,p.y+20-10,20,20);
+  });
+
+  // Frame 2 with flow arrows
+  ctx.fillStyle='#1a1a26'; ctx.fillRect(175,20,135,160);
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace'; ctx.fillText('frame t+1 with flow',175,14);
+
+  pts.forEach(p=>{
+    const nx=p.x+p.vx*3, ny=p.y+p.vy*3;
+    ctx.fillStyle='#00ffa3'; ctx.beginPath(); ctx.arc(nx+175,ny+20,4,0,Math.PI*2); ctx.fill();
+    // Flow arrow
+    ctx.strokeStyle='#ff6b35'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(p.x+175,p.y+20); ctx.lineTo(nx+175,ny+20); ctx.stroke();
+    ctx.fillStyle='#ff6b35'; ctx.beginPath(); ctx.arc(nx+175,ny+20,3,0,Math.PI*2); ctx.fill();
+  });
+
+  // Matrix visualization
+  ctx.fillStyle='rgba(0,229,255,0.1)'; ctx.fillRect(135,90,35,40);
+  ctx.strokeStyle='rgba(0,229,255,0.4)'; ctx.lineWidth=1;
+  ctx.strokeRect(135,90,35,40);
+  ctx.fillStyle='#00e5ff'; ctx.font='8px DM Mono,monospace';
+  ctx.fillText('AᵀA',140,108); ctx.fillText('Aᵀb',140,120);
+
+  lkFrame++;
+}
+
+// ===================== DENSE FLOW =====================
+function drawDenseFlow() {
+  const canvas=C('dense-canvas'); if(!canvas) return;
+  const W=canvas.width=320, H=canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0d0d14'; ctx.fillRect(0,0,W,H);
+
+  // HSV color wheel for flow directions
+  const iw=120, ih=120;
+  const rgba=new Uint8ClampedArray(iw*ih*4);
+  const cx=iw/2, cy=ih/2;
+  for(let y=0;y<ih;y++) for(let x=0;x<iw;x++){
+    const dx=x-cx, dy=y-cy;
+    const mag=Math.sqrt(dx*dx+dy*dy)/(iw/2);
+    const ang=(Math.atan2(dy,dx)+Math.PI)/(Math.PI*2);
+    if(mag<=1){
+      const [r,g,b]=hsvToRgb(ang,mag,1);
+      rgba[(y*iw+x)*4]=r|0; rgba[(y*iw+x)*4+1]=g|0;
+      rgba[(y*iw+x)*4+2]=b|0; rgba[(y*iw+x)*4+3]=255;
+    } else { rgba[(y*iw+x)*4+3]=0; }
+  }
+  drawRGBA(ctx,rgba,iw,ih,10,30,140,140);
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('HSV flow color wheel',10,22);
+  ctx.fillText('hue=direction  value=speed',10,185);
+
+  // Flow vectors sample
+  ctx.fillStyle='#1a1a26'; ctx.fillRect(165,30,145,140);
+  const gsize=10;
+  for(let y=0;y<gsize;y++) for(let x=0;x<gsize;x++){
+    const dx=(x-gsize/2)*0.5, dy=Math.sin(x/gsize*Math.PI)*3;
+    const mag=Math.sqrt(dx*dx+dy*dy);
+    const ang=(Math.atan2(dy,dx)+Math.PI)/(Math.PI*2);
+    const [r,g,b]=hsvToRgb(ang,1,Math.min(1,mag/3));
+    const px=165+x*14+7, py=30+y*14+7;
+    ctx.strokeStyle=`rgb(${r|0},${g|0},${b|0})`; ctx.lineWidth=1.5;
+    const sc=5;
+    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(px+dx*sc,py+dy*sc); ctx.stroke();
+    ctx.fillStyle=`rgb(${r|0},${g|0},${b|0})`; ctx.beginPath(); ctx.arc(px,py,2,0,Math.PI*2); ctx.fill();
+  }
+  ctx.fillStyle='#6b6b8a'; ctx.font='9px DM Mono,monospace';
+  ctx.fillText('dense flow vectors',165,22);
+}
+
+// ===================== DRAW ALL =====================
+function drawAll() {
+  drawConv(); drawGauss(); drawBilateral();
+  drawSobel(); drawCanny(); drawLaplace();
+  drawAffine(); drawHough(); updateDFT();
+  drawHarris(); drawSIFT(); drawORB();
+  drawMorph();
+  drawColor(); updateHist();
+  drawMoments(); drawContours();
+  drawLK(); drawDenseFlow();
+}
+
+// Init
+window.addEventListener('load', () => {
+  renderKernelGrid('kernel-display', kernels.blur);
+  renderKernelGrid('sobel-x-kernel', [-1,0,1,-2,0,2,-1,0,1]);
+  renderKernelGrid('sobel-y-kernel', [-1,-2,-1,0,0,0,1,2,1]);
+  C('canny-desc').textContent = cannyDescs[0];
+  drawAll();
+  // Animate LK
+  setInterval(()=>{ if(document.getElementById('optical').classList.contains('active')) drawLK(); }, 100);
+});
+</script>
+</body>
+</html>

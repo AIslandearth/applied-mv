@@ -1,0 +1,2827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Machine Vision & Robotics — Algorithm Reference</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Bebas+Neue&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg: #060608;
+  --s1: #0e0e12;
+  --s2: #16161d;
+  --s3: #1e1e28;
+  --border: #28283a;
+  --border2: #35354a;
+  --t1: #f0f0f8;
+  --t2: #9090b0;
+  --t3: #555570;
+  --cyan: #00d9ff;
+  --orange: #ff5733;
+  --green: #00ff9d;
+  --yellow: #ffcc00;
+  --purple: #cc88ff;
+  --red: #ff4466;
+  --pink: #ff88cc;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height: 100vh;
+}
+
+/* Scanline overlay */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+}
+
+/* Dot grid bg */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none;
+  background-image: radial-gradient(circle, rgba(0,217,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative; z-index:10;
+  padding: 32px 44px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-end; justify-content: space-between; flex-wrap:wrap; gap:16px;
+  background: linear-gradient(180deg, rgba(0,217,255,0.04) 0%, transparent 100%);
+}
+
+.hd-left h1 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(32px, 6vw, 64px);
+  letter-spacing: 2px;
+  line-height: 1;
+  color: var(--t1);
+}
+
+.hd-left h1 em { color: var(--cyan); font-style:normal; }
+.hd-left p { color: var(--t3); font-family:'IBM Plex Mono',monospace; font-size:12px; margin-top:6px; letter-spacing:0.08em; }
+
+.hd-tags { display:flex; gap:8px; flex-wrap:wrap; }
+.tag {
+  padding: 4px 12px; border-radius:3px; font-family:'IBM Plex Mono',monospace;
+  font-size:10px; letter-spacing:0.1em; font-weight:600;
+  border: 1px solid; cursor:default;
+}
+.tag-c { color:var(--cyan); border-color:rgba(0,217,255,0.3); background:rgba(0,217,255,0.06); }
+.tag-o { color:var(--orange); border-color:rgba(255,87,51,0.3); background:rgba(255,87,51,0.06); }
+.tag-g { color:var(--green); border-color:rgba(0,255,157,0.3); background:rgba(0,255,157,0.06); }
+
+/* ── NAV ── */
+nav {
+  position:sticky; top:0; z-index:100;
+  background: rgba(6,6,8,0.95);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; overflow-x:auto; padding:0 44px;
+  scrollbar-width:none;
+}
+nav::-webkit-scrollbar { display:none; }
+
+.nb {
+  flex-shrink:0; padding:13px 18px;
+  background:none; border:none; color:var(--t3);
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px;
+  transition:all 0.18s; letter-spacing:0.05em; white-space:nowrap;
+}
+.nb:hover { color:var(--t2); }
+.nb.act { color:var(--cyan); border-bottom-color:var(--cyan); }
+
+/* ── MAIN ── */
+main { position:relative; z-index:1; padding:36px 44px; max-width:1440px; margin:0 auto; }
+
+.sec { display:none; }
+.sec.act { display:block; animation: appear 0.25s ease; }
+@keyframes appear { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+.sec-hd {
+  margin-bottom:28px; padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.sec-hd h2 { font-family:'Bebas Neue',sans-serif; font-size:clamp(20px,3vw,32px); letter-spacing:1px; color:var(--t1); }
+.sec-hd p { color:var(--t2); font-size:13px; margin-top:6px; max-width:800px; line-height:1.7; }
+
+/* ── GRID ── */
+.grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(360px,1fr)); gap:18px; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-wide { grid-column: span 2; }
+@media(max-width:800px) { .grid-2{grid-template-columns:1fr;} .grid-wide{grid-column:span 1;} }
+
+/* ── CARD ── */
+.card {
+  background:var(--s1); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover { border-color:var(--border2); box-shadow:0 0 24px rgba(0,217,255,0.05); }
+
+.card-hd {
+  padding:16px 20px 14px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.card-icon { font-size:18px; flex-shrink:0; }
+.card-title { font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600; color:var(--t1); }
+.card-badge {
+  margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:9px;
+  padding:3px 8px; border-radius:2px; font-weight:600; letter-spacing:0.08em;
+  border:1px solid; flex-shrink:0;
+}
+
+.card-body { padding:18px 20px; }
+
+/* ── CANVAS ── */
+canvas {
+  display:block; width:100%; border-radius:6px;
+  background:#060810; margin-bottom:14px;
+  image-rendering:pixelated;
+}
+
+/* ── FORMULA ── */
+.formula {
+  background:var(--s2); border:1px solid var(--border);
+  border-radius:6px; padding:12px 14px;
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  color:var(--cyan); line-height:1.8; margin-bottom:12px;
+  white-space:pre-wrap; word-break:break-word;
+}
+
+/* ── THINKING BLOCK ── */
+.think {
+  background: rgba(255,204,0,0.04);
+  border-left:3px solid var(--yellow);
+  padding:10px 14px; border-radius:0 6px 6px 0;
+  margin-bottom:12px;
+}
+.think-label {
+  font-family:'IBM Plex Mono',monospace; font-size:9px;
+  color:var(--yellow); letter-spacing:0.1em; margin-bottom:6px; font-weight:600;
+}
+.think p { font-size:12px; color:var(--t2); line-height:1.7; }
+.think p strong { color:var(--t1); }
+
+/* ── CODE ── */
+.code {
+  background:var(--s2); border:1px solid var(--border);
+  border-radius:6px; padding:12px 14px;
+  font-family:'IBM Plex Mono',monospace; font-size:11px;
+  line-height:1.9; overflow-x:auto; margin-top:10px;
+}
+.kw{color:var(--purple)} .fn{color:var(--cyan)} .cm{color:var(--t3)}
+.str{color:var(--green)} .num{color:var(--yellow)} .v{color:var(--t1)}
+.op{color:var(--orange)}
+
+/* ── CONTROLS ── */
+.ctrls { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+.btn {
+  padding:6px 14px; background:var(--s2); border:1px solid var(--border);
+  border-radius:4px; color:var(--t2); font-family:'IBM Plex Mono',monospace;
+  font-size:10px; cursor:pointer; transition:all 0.15s; letter-spacing:0.04em;
+}
+.btn:hover { color:var(--t1); border-color:var(--border2); }
+.btn.act { background:rgba(0,217,255,0.1); color:var(--cyan); border-color:var(--cyan); }
+
+.sl-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.sl-lbl { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--t3); min-width:100px; }
+.sl-val { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--cyan); min-width:32px; text-align:right; }
+input[type=range] { flex:1; accent-color:var(--cyan); }
+
+/* ── PIPELINE ── */
+.pipeline {
+  display:flex; align-items:center; gap:0; margin-bottom:14px; overflow-x:auto;
+  padding:10px 0; scrollbar-width:none;
+}
+.pipeline::-webkit-scrollbar{display:none;}
+.pipe-step {
+  flex-shrink:0; padding:8px 14px; background:var(--s2); border:1px solid var(--border);
+  border-radius:4px; font-family:'IBM Plex Mono',monospace; font-size:10px;
+  color:var(--t2); text-align:center; cursor:pointer; transition:all 0.15s;
+}
+.pipe-step:hover { color:var(--t1); }
+.pipe-step.act { color:var(--cyan); border-color:var(--cyan); background:rgba(0,217,255,0.07); }
+.pipe-arrow { flex-shrink:0; color:var(--t3); font-size:14px; padding:0 4px; }
+
+/* ── MATRIX DISPLAY ── */
+.matrix-wrap { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
+.matrix {
+  background:var(--s2); border:1px solid var(--border); border-radius:6px;
+  padding:10px 14px; font-family:'IBM Plex Mono',monospace; font-size:11px;
+}
+.matrix-title { color:var(--t3); font-size:9px; margin-bottom:6px; letter-spacing:0.1em; }
+.matrix-row { display:flex; gap:12px; }
+.matrix-cell { color:var(--cyan); min-width:40px; text-align:center; padding:2px 0; }
+.matrix-cell.neg { color:var(--orange); }
+.matrix-cell.zero { color:var(--t3); }
+
+/* ── INFO COLS ── */
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+@media(max-width:600px){.info-grid{grid-template-columns:1fr;}}
+.info-box { background:var(--s2); border:1px solid var(--border); border-radius:6px; padding:10px 12px; }
+.info-box-title { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--t3); letter-spacing:0.1em; margin-bottom:6px; }
+.info-box p { font-size:11px; color:var(--t2); line-height:1.65; }
+.info-box p strong { color:var(--t1); }
+
+.stat-line { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); font-size:11px; }
+.stat-line:last-child{border:none;}
+.stat-k { color:var(--t3); font-family:'IBM Plex Mono',monospace; font-size:10px; }
+.stat-v { color:var(--cyan); font-family:'IBM Plex Mono',monospace; font-size:10px; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd-left">
+    <h1>Machine <em>Vision</em> & Robotics</h1>
+    <p>// complete algorithm reference — math · pipeline · code · thinking</p>
+  </div>
+  <div class="hd-tags">
+    <span class="tag tag-c">OpenCV-Python</span>
+    <span class="tag tag-o">NumPy / SciPy</span>
+    <span class="tag tag-g">Robotics CV</span>
+  </div>
+</header>
+
+<nav>
+  <button class="nb act" onclick="show('lines')">Line & Shape Detection</button>
+  <button class="nb" onclick="show('perspective')">Perspective & Homography</button>
+  <button class="nb" onclick="show('calibration')">Camera Calibration</button>
+  <button class="nb" onclick="show('stereo')">Stereo & Depth</button>
+  <button class="nb" onclick="show('tracking')">Object Tracking</button>
+  <button class="nb" onclick="show('segmentation')">Segmentation</button>
+  <button class="nb" onclick="show('pose')">Pose Estimation</button>
+  <button class="nb" onclick="show('slam')">SLAM Concepts</button>
+</nav>
+
+<main>
+
+<!-- ══════════════ LINE & SHAPE DETECTION ══════════════ -->
+<div class="sec act" id="lines">
+  <div class="sec-hd">
+    <h2>Line Detection, Shape Fitting & Geometric Primitives</h2>
+    <p>Finding lines, circles, ellipses, and arbitrary polygons in images. The Hough family transforms raw edge pixels into geometric parameter votes, while RANSAC robustly fits models to noisy point sets.</p>
+  </div>
+  <div class="grid">
+
+    <!-- HOUGH LINE -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">╱</span>
+        <span class="card-title">Hough Line Transform</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">VOTING</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-hough-line" height="220"></canvas>
+        <div class="ctrls">
+          <button class="btn act" onclick="setHL('normal',this)">Standard Hough</button>
+          <button class="btn" onclick="setHL('prob',this)">Probabilistic</button>
+          <button class="btn" onclick="setHL('accum',this)">Accumulator</button>
+        </div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>The problem:</strong> We have edge pixels — how do we know which ones form a line?<br>
+          <strong>Key insight:</strong> Any point (x,y) lies on infinitely many lines. In (ρ,θ) parameter space, each point becomes a <em>sinusoidal curve</em>. Points on the same line produce sinusoids that intersect at one (ρ,θ) — that peak = the line.<br>
+          <strong>Why ρ,θ instead of y=mx+b?</strong> Vertical lines have m=∞ and break the Cartesian representation.</p>
+        </div>
+        <div class="formula">Line in polar:  ρ = x·cos(θ) + y·sin(θ)
+ρ ∈ [-d, d]    d = image diagonal
+θ ∈ [0°, 180°]
+
+For each edge pixel (x,y):
+  for θ in range(0, π, dθ):
+    ρ = x·cos(θ) + y·sin(θ)
+    accumulator[ρ, θ] += 1  ← voting
+
+Peak in accumulator = detected line</div>
+        <div class="code">
+<span class="v">edges</span> = <span class="fn">cv2.Canny</span>(<span class="v">gray</span>, <span class="num">50</span>, <span class="num">150</span>)
+<span class="cm"># Standard Hough — returns (ρ, θ) pairs</span>
+<span class="v">lines</span> = <span class="fn">cv2.HoughLines</span>(<span class="v">edges</span>,
+    <span class="v">rho</span>=<span class="num">1</span>, <span class="v">theta</span>=<span class="v">np.pi</span>/<span class="num">180</span>, <span class="v">threshold</span>=<span class="num">100</span>)
+
+<span class="cm"># Probabilistic — faster, returns endpoints</span>
+<span class="v">lines</span> = <span class="fn">cv2.HoughLinesP</span>(<span class="v">edges</span>,
+    <span class="v">rho</span>=<span class="num">1</span>, <span class="v">theta</span>=<span class="v">np.pi</span>/<span class="num">180</span>, <span class="v">threshold</span>=<span class="num">80</span>,
+    <span class="v">minLineLength</span>=<span class="num">50</span>, <span class="v">maxLineGap</span>=<span class="num">10</span>)</div>
+      </div>
+    </div>
+
+    <!-- HOUGH CIRCLE -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">○</span>
+        <span class="card-title">Hough Circle Transform</span>
+        <span class="card-badge" style="color:var(--orange);border-color:rgba(255,87,51,0.3)">3D SPACE</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-hough-circle" height="220"></canvas>
+        <div class="sl-row">
+          <span class="sl-lbl">min radius</span>
+          <input type="range" min="10" max="50" value="20" id="sl-cr" oninput="updateHC()">
+          <span class="sl-val" id="sv-cr">20</span>
+        </div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Extension:</strong> A circle needs 3 parameters (cx,cy,r) so the accumulator is now a 3D volume.<br>
+          <strong>CHT trick (Gradient method):</strong> Each edge pixel's gradient points toward the circle center — cast a vote along that gradient direction. This collapses the 3D problem to a 2D vote per radius.<br>
+          <strong>Cost:</strong> O(W·H·R) where R = radius range. Expensive for large radii.</p>
+        </div>
+        <div class="formula">Circle: (x-cx)² + (y-cy)² = r²
+
+For each edge pixel (x,y) with gradient angle θ:
+  For r in [rMin, rMax]:
+    cx = x - r·cos(θ)   ← gradient direction
+    cy = y - r·sin(θ)
+    accumulator[cx, cy, r] += 1</div>
+        <div class="code">
+<span class="v">circles</span> = <span class="fn">cv2.HoughCircles</span>(<span class="v">gray</span>,
+    <span class="v">cv2.HOUGH_GRADIENT</span>,
+    <span class="v">dp</span>=<span class="num">1</span>,        <span class="cm"># accumulator resolution</span>
+    <span class="v">minDist</span>=<span class="num">30</span>,  <span class="cm"># min distance between centers</span>
+    <span class="v">param1</span>=<span class="num">100</span>,  <span class="cm"># Canny high threshold</span>
+    <span class="v">param2</span>=<span class="num">30</span>,   <span class="cm"># accumulator threshold</span>
+    <span class="v">minRadius</span>=<span class="num">10</span>, <span class="v">maxRadius</span>=<span class="num">80</span>)</div>
+      </div>
+    </div>
+
+    <!-- RANSAC -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⦿</span>
+        <span class="card-title">RANSAC — Robust Model Fitting</span>
+        <span class="card-badge" style="color:var(--green);border-color:rgba(0,255,157,0.3)">ROBUST</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-ransac" height="220"></canvas>
+        <div class="ctrls">
+          <button class="btn act" onclick="runRANSAC()">↺ Regenerate</button>
+          <button class="btn" id="ransac-step-btn" onclick="stepRANSAC()">Step through</button>
+        </div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Problem:</strong> Real data has outliers (noise, misdetections). Least-squares is dominated by outliers.<br>
+          <strong>RANSAC insight:</strong> Randomly sample the <em>minimum</em> number of points to define a model, count how many other points agree ("inliers"). Repeat. The best model wins.<br>
+          <strong>Key parameter:</strong> ε = inlier threshold (distance to model). N = iterations needed: <code>N = log(1-p) / log(1-(1-e)^s)</code> where e = outlier ratio, s = sample size, p = desired confidence.</p>
+        </div>
+        <div class="formula">RANSAC(points, model, ε, N_iter):
+  best_inliers = []
+  for i in range(N_iter):
+    sample = random_sample(points, min_sample)
+    model = fit(sample)           ← minimal fit
+    inliers = [p for p in points
+               if dist(p, model) < ε]
+    if len(inliers) > len(best_inliers):
+      best_inliers = inliers
+  return refit(best_inliers)      ← final fit</div>
+      </div>
+    </div>
+
+    <!-- SHAPE CONTOUR & FITTING -->
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⬟</span>
+        <span class="card-title">Shape Fitting — Poly, Ellipse, Hull</span>
+        <span class="card-badge" style="color:var(--purple);border-color:rgba(204,136,255,0.3)">GEOMETRY</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-shapes" height="220"></canvas>
+        <div class="ctrls">
+          <button class="btn act" onclick="setShape('poly',this)">approxPolyDP</button>
+          <button class="btn" onclick="setShape('ellipse',this)">fitEllipse</button>
+          <button class="btn" onclick="setShape('hull',this)">convexHull</button>
+          <button class="btn" onclick="setShape('minarc',this)">minAreaRect</button>
+        </div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p id="shape-think">approxPolyDP uses Ramer-Douglas-Peucker: finds the point farthest from the line segment between endpoints. If > ε, it's kept as a vertex. Recurse on both halves. Result: a polygon that stays within ε pixels of the original contour.</p>
+        </div>
+        <div class="formula" id="shape-formula">RDP algorithm: O(n log n) average
+ε controls approximation tightness:
+  Small ε → many vertices (close to contour)
+  Large ε → few vertices (rough polygon)
+cv2.approxPolyDP(contour, epsilon, closed=True)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ PERSPECTIVE & HOMOGRAPHY ══════════════ -->
+<div class="sec" id="perspective">
+  <div class="sec-hd">
+    <h2>Perspective Transform & Homography</h2>
+    <p>Mapping between planes in 3D. The homography matrix H encodes the full projective transformation between two views of a planar surface. Essential for document scanning, AR, panorama stitching, and lane detection.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card grid-wide">
+      <div class="card-hd">
+        <span class="card-icon">⟁</span>
+        <span class="card-title">Homography — 4-Point Perspective Warp</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">8 DOF</span>
+      </div>
+      <div class="card-body">
+        <div class="ctrls">
+          <button class="btn act" onclick="setPerspMode('warp',this)">Document Rectification</button>
+          <button class="btn" onclick="setPerspMode('ar',this)">AR Overlay</button>
+          <button class="btn" onclick="setPerspMode('lane',this)">Bird's-eye View (Lane)</button>
+          <button class="btn" onclick="setPerspMode('stitch',this)">Panorama Stitching</button>
+        </div>
+        <canvas id="c-persp" height="260"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p id="persp-think"><strong>Document scanning:</strong> A flat document viewed at an angle looks like a trapezoid. We know it should be a rectangle. Pick 4 corner correspondences and solve for H. This is a 2D projective transform that un-does the camera angle.</p>
+        </div>
+        <div class="info-grid">
+          <div>
+            <div class="formula" id="persp-formula">Homography maps: x' = H·x  (homogeneous coords)
+[x']   [h1 h2 h3][x]
+[y'] = [h4 h5 h6][y]   then divide by w'
+[w']   [h7 h8  1][1]
+
+H has 8 DOF (9 params, scale-invariant)
+Requires minimum 4 point correspondences.
+
+Each correspondence gives 2 linear equations → 8 unknowns.
+Solved via DLT (Direct Linear Transform) + SVD.</div>
+          </div>
+          <div>
+            <div class="code" style="margin-top:0">
+<span class="cm"># 4 source points (corners of document)</span>
+<span class="v">src_pts</span> = <span class="v">np</span>.<span class="fn">float32</span>([[<span class="num">120</span>,<span class="num">80</span>],[<span class="num">420</span>,<span class="num">60</span>],
+                       [<span class="num">460</span>,<span class="num">380</span>],[<span class="num">80</span>,<span class="num">400</span>]])
+<span class="v">dst_pts</span> = <span class="v">np</span>.<span class="fn">float32</span>([[<span class="num">0</span>,<span class="num">0</span>],[<span class="num">400</span>,<span class="num">0</span>],
+                       [<span class="num">400</span>,<span class="num">480</span>],[<span class="num">0</span>,<span class="num">480</span>]])
+<span class="v">H</span>, <span class="v">_</span> = <span class="fn">cv2.findHomography</span>(<span class="v">src_pts</span>, <span class="v">dst_pts</span>,
+                            <span class="v">cv2.RANSAC</span>, <span class="num">5.0</span>)
+<span class="v">warped</span> = <span class="fn">cv2.warpPerspective</span>(<span class="v">img</span>, <span class="v">H</span>,
+                              (<span class="num">400</span>, <span class="num">480</span>))</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊞</span>
+        <span class="card-title">DLT — Solving for H</span>
+        <span class="card-badge" style="color:var(--yellow);border-color:rgba(255,204,0,0.3)">MATH CORE</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-dlt" height="200"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Each point pair (x↔x') gives us 2 equations:</strong> Cross-product formulation x'×(Hx)=0 expands to a row of a matrix A. Stack 4 pairs → 8×9 matrix. <strong>SVD:</strong> The solution is the right singular vector corresponding to the smallest singular value. This minimizes ||Ah||² subject to ||h||=1.</p>
+        </div>
+        <div class="formula">For each correspondence (xi, xi'):
+  [-xi  0   xi·xi']   ← row from cross-product
+  [0  -xi   yi·xi']
+Stack 4 pairs → matrix A (8×9)
+Solve: min ||Ah|| s.t. ||h||=1
+Solution: h = last column of V in SVD(A)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊹</span>
+        <span class="card-title">Affine vs Projective vs Euclidean</span>
+        <span class="card-badge" style="color:var(--green);border-color:rgba(0,255,157,0.3)">HIERARCHY</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-transform-hier" height="200"></canvas>
+        <div class="formula">Euclidean  (3 DOF): rotation + translation
+                    Preserves: distances, angles
+Similarity (4 DOF): + uniform scale
+                    Preserves: angles, ratios
+Affine     (6 DOF): + shear + non-uniform scale
+                    Preserves: parallelism, ratios
+Projective (8 DOF): full planar mapping
+                    Preserves: incidence only</div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p>Each step up the hierarchy adds DOF and loses invariants. <strong>Robot navigation:</strong> use Euclidean (rigid body). <strong>Document scan:</strong> use Projective. <strong>Panorama:</strong> use Homography between image planes.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ CAMERA CALIBRATION ══════════════ -->
+<div class="sec" id="calibration">
+  <div class="sec-hd">
+    <h2>Camera Calibration & Lens Distortion</h2>
+    <p>Real cameras project 3D world points to 2D image pixels through the pinhole model. Calibration finds the intrinsic matrix K and distortion coefficients. Without this, measurements in image space are meaningless.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card grid-wide">
+      <div class="card-hd">
+        <span class="card-icon">📷</span>
+        <span class="card-title">Pinhole Camera Model — Projection Math</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">INTRINSICS</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-pinhole" height="240"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Why calibrate?</strong> Pixel coordinates (u,v) don't tell you where something is in 3D. The intrinsic matrix K converts from metric camera coordinates to pixel coordinates. <strong>Focal length f</strong> controls how much perspective compression occurs. <strong>Principal point (cx,cy)</strong> is where the optical axis hits the image plane — not always the center.</p>
+        </div>
+        <div class="info-grid">
+          <div class="formula">Full projection pipeline:
+3D World → 3D Camera → 2D Image → Pixel
+
+[u]   1    [fx  s  cx] [R|t] [X]
+[v] = — ·  [0  fy  cy]      [Y]
+[1]   Z    [0   0   1]      [Z]
+                             [1]
+     ↑               ↑      ↑
+  Intrinsic K      Extrinsic  World pt
+
+fx = f/px  fy = f/py  (focal in pixels)
+s  = skew (≈0 for modern cameras)
+cx,cy = principal point</div>
+          <div>
+            <div class="matrix-wrap">
+              <div class="matrix">
+                <div class="matrix-title">K — INTRINSIC MATRIX</div>
+                <div class="matrix-row">
+                  <span class="matrix-cell">fx</span>
+                  <span class="matrix-cell zero">0</span>
+                  <span class="matrix-cell">cx</span>
+                </div>
+                <div class="matrix-row">
+                  <span class="matrix-cell zero">0</span>
+                  <span class="matrix-cell">fy</span>
+                  <span class="matrix-cell">cy</span>
+                </div>
+                <div class="matrix-row">
+                  <span class="matrix-cell zero">0</span>
+                  <span class="matrix-cell zero">0</span>
+                  <span class="matrix-cell">1</span>
+                </div>
+              </div>
+              <div class="matrix">
+                <div class="matrix-title">[R|t] — EXTRINSIC 3×4</div>
+                <div class="matrix-row">
+                  <span class="matrix-cell">r11</span><span class="matrix-cell">r12</span><span class="matrix-cell">r13</span><span class="matrix-cell">tx</span>
+                </div>
+                <div class="matrix-row">
+                  <span class="matrix-cell">r21</span><span class="matrix-cell">r22</span><span class="matrix-cell">r23</span><span class="matrix-cell">ty</span>
+                </div>
+                <div class="matrix-row">
+                  <span class="matrix-cell">r31</span><span class="matrix-cell">r32</span><span class="matrix-cell">r33</span><span class="matrix-cell">tz</span>
+                </div>
+              </div>
+            </div>
+            <div class="code" style="margin-top:0">
+<span class="v">ret</span>,<span class="v">K</span>,<span class="v">dist</span>,<span class="v">rvecs</span>,<span class="v">tvecs</span> = <span class="fn">cv2.calibrateCamera</span>(
+    <span class="v">objpoints</span>, <span class="v">imgpoints</span>, <span class="v">gray</span>.<span class="fn">shape</span>[::-<span class="num">1</span>],
+    <span class="kw">None</span>, <span class="kw">None</span>)
+<span class="cm"># K = 3×3 intrinsic, dist = [k1,k2,p1,p2,k3]</span>
+<span class="v">undist</span> = <span class="fn">cv2.undistort</span>(<span class="v">img</span>, <span class="v">K</span>, <span class="v">dist</span>)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⤵</span>
+        <span class="card-title">Lens Distortion Models</span>
+        <span class="card-badge" style="color:var(--orange);border-color:rgba(255,87,51,0.3)">DISTORTION</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-distort" height="200"></canvas>
+        <div class="ctrls">
+          <button class="btn act" onclick="setDist('barrel',this)">Barrel</button>
+          <button class="btn" onclick="setDist('pincushion',this)">Pincushion</button>
+          <button class="btn" onclick="setDist('none',this)">Undistorted</button>
+        </div>
+        <div class="formula">Radial distortion (dominant):
+r² = x² + y²
+x' = x(1 + k1·r² + k2·r⁴ + k3·r⁶)
+y' = y(1 + k1·r² + k2·r⁴ + k3·r⁶)
+
+Tangential (off-center lens):
+x' += 2p1·xy + p2(r²+2x²)
+y' += p1(r²+2y²) + 2p2·xy
+
+dist = [k1, k2, p1, p2, k3]</div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>k1 < 0</strong> = barrel (wide-angle, fisheye). <strong>k1 > 0</strong> = pincushion (telephoto). For robotics/autonomous driving, undistortion must happen before any geometric computation (distance, angle, homography).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊞</span>
+        <span class="card-title">Calibration Pattern (Chessboard / ChArUco)</span>
+        <span class="card-badge" style="color:var(--purple);border-color:rgba(204,136,255,0.3)">ZHANG METHOD</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-chess" height="200"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Zhang's method:</strong> Each view of the chessboard gives a homography H_i from the pattern plane to the image. From H we extract constraints on K. With ≥3 views we have enough equations to solve for K and distortion.<br>
+          <strong>Why sub-pixel corners?</strong> 1px error in corner = ~0.5° error in angle measurements. cornerSubPix refines to ~0.1px.</p>
+        </div>
+        <div class="formula">Pattern: known 3D points (z=0 plane)
+  objp = (col, row, 0) in mm
+
+Per image: find 2D corners → imgpoints
+  retval, corners = cv2.findChessboardCorners()
+  corners = cv2.cornerSubPix(gray, corners,
+              (11,11), (-1,-1), criteria)
+
+≥3 views → cv2.calibrateCamera()
+Reprojection error < 0.5px = good calibration</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ STEREO & DEPTH ══════════════ -->
+<div class="sec" id="stereo">
+  <div class="sec-hd">
+    <h2>Stereo Vision & Depth Estimation</h2>
+    <p>Two calibrated cameras enable triangulation to recover metric 3D structure. The disparity map encodes depth. Fundamental for robot perception, autonomous vehicles, and 3D reconstruction.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card grid-wide">
+      <div class="card-hd">
+        <span class="card-icon">⇆</span>
+        <span class="card-title">Stereo Geometry — Epipolar Constraint</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">TRIANGULATION</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-stereo" height="260"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Core insight:</strong> A point in the left image maps to a <em>line</em> (epipolar line) in the right image, not a full 2D search. This reduces correspondence matching from O(W×H) to O(W) per pixel.<br>
+          <strong>After rectification:</strong> Epipolar lines become horizontal. Matching reduces to 1D search. <strong>Disparity</strong> d = xL - xR. Depth Z = f·B/d where B = baseline, f = focal length.</p>
+        </div>
+        <div class="info-grid">
+          <div class="formula">Epipolar: xR · F · xL = 0
+  F = K_R^-T · [t]× · R · K_L^-1   (Fundamental)
+  E = [t]× · R                       (Essential, calibrated)
+
+Depth from disparity:
+  Z = (f · B) / d
+  d = xL - xR  (disparity in pixels)
+  B = baseline distance (meters)
+  f = focal length (pixels)</div>
+          <div>
+            <div class="code" style="margin-top:0">
+<span class="cm"># Rectify stereo pair</span>
+<span class="v">R1</span>,<span class="v">R2</span>,<span class="v">P1</span>,<span class="v">P2</span>,<span class="v">Q</span> = <span class="fn">cv2.stereoRectify</span>(<span class="v">K1</span>,<span class="v">d1</span>,<span class="v">K2</span>,<span class="v">d2</span>,
+    <span class="v">imgSize</span>, <span class="v">R</span>, <span class="v">T</span>)[:<span class="num">5</span>]
+<span class="cm"># Compute disparity</span>
+<span class="v">stereo</span> = <span class="fn">cv2.StereoSGBM_create</span>(
+    <span class="v">minDisparity</span>=<span class="num">0</span>, <span class="v">numDisparities</span>=<span class="num">128</span>,
+    <span class="v">blockSize</span>=<span class="num">11</span>, <span class="v">P1</span>=<span class="num">8</span>*<span class="num">3</span>*<span class="num">11</span>**<span class="num">2</span>, <span class="v">P2</span>=<span class="num">32</span>*<span class="num">3</span>*<span class="num">11</span>**<span class="num">2</span>)
+<span class="v">disp</span> = <span class="v">stereo</span>.<span class="fn">compute</span>(<span class="v">imgL</span>, <span class="v">imgR</span>)
+<span class="cm"># Reproject to 3D: Q is 4×4 disparity-to-depth</span>
+<span class="v">pts3D</span> = <span class="fn">cv2.reprojectImageTo3D</span>(<span class="v">disp</span>, <span class="v">Q</span>)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">≋</span>
+        <span class="card-title">SGBM — Semi-Global Block Matching</span>
+        <span class="card-badge" style="color:var(--yellow);border-color:rgba(255,204,0,0.3)">DISPARITY</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-sgbm" height="200"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Block matching alone:</strong> fast but noisy (ambiguous in textureless regions).<br>
+          <strong>SGBM insight:</strong> Add smoothness constraint via dynamic programming along 8 directions. Cost function: C(p,d) = match_cost(p,d) + P1·|Δd=1| + P2·|Δd>1|. P1 penalizes small disparity changes, P2 penalizes large jumps (occlusions).</p>
+        </div>
+        <div class="formula">Cost(p, d) = SAD(left_patch, right_patch_at_d)
+
+Path cost: L_r(p,d) = C(p,d) + min(
+  L_r(p-r, d),
+  L_r(p-r, d±1) + P1,
+  min_k L_r(p-r, k) + P2)
+
+Aggregate over 8 directions (semi-global)
+Choose d* = argmin_d Σ_r L_r(p,d)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">△</span>
+        <span class="card-title">Triangulation & Point Cloud</span>
+        <span class="card-badge" style="color:var(--green);border-color:rgba(0,255,157,0.3)">3D MATH</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-triangulate" height="200"></canvas>
+        <div class="formula">Given camera matrices P1, P2 and matches x1, x2:
+AX = 0  where A is 4×4:
+  [x1 × P1]   (2 rows from cross-product)
+  [x2 × P2]   (2 rows)
+
+X = last column of V in SVD(A)
+Dehomogenize: X3D = X[:3] / X[3]
+
+cv2.triangulatePoints(P1, P2, pts1, pts2)</div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p>Two rays from two camera centers <em>should</em> intersect in 3D. In practice they don't (noise). DLT finds the point that minimizes reprojection error simultaneously in both views. The disparity-to-depth map Q handles this for dense stereo.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ TRACKING ══════════════ -->
+<div class="sec" id="tracking">
+  <div class="sec-hd">
+    <h2>Object Tracking Algorithms</h2>
+    <p>Tracking maintains identity of objects across frames. Different algorithms trade-off between speed, accuracy, and robustness to occlusion and appearance change.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊙</span>
+        <span class="card-title">Kalman Filter — State Estimation</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">PREDICT+UPDATE</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-kalman" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Two-step Bayesian filter:</strong> <em>Predict</em> where the object will be using a motion model. <em>Update</em> using the noisy measurement. The Kalman gain K balances how much to trust the prediction vs. measurement — based on their respective uncertainties.<br>
+          <strong>State for tracking:</strong> [x, y, vx, vy] — position + velocity. Measurement: just [x, y].</p>
+        </div>
+        <div class="formula">State: x = [px, py, vx, vy]ᵀ
+
+Predict:  x̂ = F·x + B·u         ← motion model
+          P̂ = F·P·Fᵀ + Q         ← covariance grows
+
+Update:   K = P̂·Hᵀ·(H·P̂·Hᵀ+R)⁻¹  ← Kalman gain
+          x = x̂ + K·(z - H·x̂)   ← fuse measurement
+          P = (I - K·H)·P̂        ← covariance shrinks
+
+Q = process noise   R = measurement noise</div>
+        <div class="code">
+<span class="v">kf</span> = <span class="fn">cv2.KalmanFilter</span>(<span class="num">4</span>, <span class="num">2</span>) <span class="cm"># 4 state, 2 meas</span>
+<span class="v">kf</span>.<span class="v">transitionMatrix</span> = <span class="v">np</span>.<span class="fn">array</span>([
+    [<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>],[<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">1</span>],
+    [<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>],[<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>]])  <span class="cm"># F matrix</span>
+<span class="v">prediction</span> = <span class="v">kf</span>.<span class="fn">predict</span>()
+<span class="v">updated</span> = <span class="v">kf</span>.<span class="fn">correct</span>(<span class="v">measurement</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">◈</span>
+        <span class="card-title">Mean-Shift & CAMShift</span>
+        <span class="card-badge" style="color:var(--orange);border-color:rgba(255,87,51,0.3)">COLOR HISTOGRAM</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-meanshift" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Mean-shift:</strong> Build a color histogram of the target region. In new frame, compute backprojection (likelihood each pixel belongs to target). Shift the window toward the mode of this probability density.<br>
+          <strong>CAMShift</strong> (Continuously Adaptive Mean-Shift) also updates window size and angle — handles scale change.</p>
+        </div>
+        <div class="formula">Backprojection: B(x) = H_target[Hue(x)]
+  (replace each pixel with its histogram probability)
+
+Mean-shift iteration:
+  m(x) = Σ x_i · k(||x-x_i||/h) · w(x_i)
+          ────────────────────────────────
+           Σ k(||x-x_i||/h) · w(x_i)
+  Move window center to m(x). Repeat until converge.</div>
+        <div class="code">
+<span class="cm"># Build HSV histogram of target</span>
+<span class="v">roi_hist</span> = <span class="fn">cv2.calcHist</span>([<span class="v">roi_hsv</span>],[<span class="num">0</span>],<span class="kw">None</span>,[<span class="num">180</span>],[<span class="num">0</span>,<span class="num">180</span>])
+<span class="fn">cv2.normalize</span>(<span class="v">roi_hist</span>, <span class="v">roi_hist</span>, <span class="num">0</span>, <span class="num">255</span>, <span class="v">cv2.NORM_MINMAX</span>)
+<span class="v">dst</span> = <span class="fn">cv2.calcBackProject</span>([<span class="v">hsv</span>],[<span class="num">0</span>],<span class="v">roi_hist</span>,[<span class="num">0</span>,<span class="num">180</span>],<span class="num">1</span>)
+<span class="v">ret</span>,<span class="v">track_window</span> = <span class="fn">cv2.CamShift</span>(<span class="v">dst</span>, <span class="v">track_window</span>, <span class="v">criteria</span>)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⬡</span>
+        <span class="card-title">IoU & Hungarian Algorithm (Multi-Object)</span>
+        <span class="card-badge" style="color:var(--green);border-color:rgba(0,255,157,0.3)">SORT / DeepSORT</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-iou" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>SORT algorithm:</strong> Predict all track positions with Kalman. Detect objects with detector. Build cost matrix using IoU between predicted boxes and detections. Assign with Hungarian algorithm (optimal bipartite matching). Unmatched detections = new tracks. Tracks with no match for N frames = deleted.<br>
+          <strong>DeepSORT</strong> adds appearance descriptor (ReID) to the cost, enabling longer re-identification after occlusion.</p>
+        </div>
+        <div class="formula">IoU(A,B) = |A∩B| / |A∪B|
+Cost matrix: C[i,j] = 1 - IoU(track_i, det_j)
+
+Hungarian / linear_sum_assignment(C):
+  Finds optimal 1-to-1 assignment that
+  minimizes total cost. O(n³) but n is small.
+
+from scipy.optimize import linear_sum_assignment
+row_ind, col_ind = linear_sum_assignment(cost_matrix)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ SEGMENTATION ══════════════ -->
+<div class="sec" id="segmentation">
+  <div class="sec-hd">
+    <h2>Image Segmentation</h2>
+    <p>Partitioning the image into meaningful regions. Classical methods use color, gradient, and graph theory. Essential for robot workspace understanding.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">🌊</span>
+        <span class="card-title">Watershed Algorithm</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">TOPOLOGY</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-watershed" height="220"></canvas>
+        <div class="ctrls">
+          <button class="btn act" onclick="setWS(0,this)">Gradient</button>
+          <button class="btn" onclick="setWS(1,this)">Markers</button>
+          <button class="btn" onclick="setWS(2,this)">Flooded</button>
+        </div>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Analogy:</strong> Treat gradient magnitude as elevation. Flood from user-placed markers (seeds). Where different floods meet = watershed boundary = object boundary.<br>
+          <strong>Practical pipeline:</strong> Binary threshold → morphological operations to separate foreground/background → sure foreground via erosion → unknown region = sure_bg - sure_fg → assign marker labels → cv2.watershed.</p>
+        </div>
+        <div class="formula">1. Gradient magnitude = topographic surface
+2. Place markers in sure regions:
+     sure_bg = cv2.dilate(thresh, k, 3)
+     sure_fg = cv2.erode(thresh, k, 3)
+     unknown = sure_bg - sure_fg
+3. Label markers: 0=unknown, 1=bg, 2+=objects
+4. cv2.watershed(img, markers)
+5. markers == -1 → boundary pixels</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">▦</span>
+        <span class="card-title">GrabCut — Iterative Graph Cut</span>
+        <span class="card-badge" style="color:var(--yellow);border-color:rgba(255,204,0,0.3)">GMM + GRAPH</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-grabcut" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Formulation:</strong> Energy minimization problem. Each pixel has two costs: (1) how well it fits the fg/bg color model (unary term via GMM), (2) how different it is from its neighbors (pairwise term). Graph cut finds the min-energy partition.<br>
+          <strong>Why GMM?</strong> Multiple Gaussians model complex color distributions (shadow, texture, multiple colors in one object).</p>
+        </div>
+        <div class="formula">E(α) = λ · U(α, θ, z)   + V(α, z)
+         ↑ unary (GMM fit)   ↑ pairwise (smoothness)
+
+U = -log P(z_n | α_n, θ)   ← GMM likelihood
+V = γ · Σ [α_m ≠ α_n] · exp(-β||z_m-z_n||²)
+    ←── contrast-sensitive boundary penalty
+
+cv2.grabCut(img, mask, rect, bgdModel,
+            fgdModel, iterCount=5, mode)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊠</span>
+        <span class="card-title">Connected Components & Labeling</span>
+        <span class="card-badge" style="color:var(--purple);border-color:rgba(204,136,255,0.3)">FLOOD FILL</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-ccl" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Two-pass algorithm:</strong> First pass scans left-to-right, assigns provisional labels, records when two labels touch (union-find structure). Second pass resolves equivalences.<br>
+          <strong>statsOutput</strong> gives bounding box, area, centroid per component — useful for filtering blobs by size, aspect ratio for object detection without deep learning.</p>
+        </div>
+        <div class="formula">Two-pass BFS/union-find:
+Pass 1: scan pixels L→R, T→B
+  if pixel = 1:
+    check 4-neighbors (already visited)
+    if no labeled neighbors → new label
+    if neighbors have labels → union them
+Pass 2: replace provisional with root label
+
+cv2.connectedComponentsWithStats(binary)
+→ num_labels, labels, stats, centroids</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ POSE ESTIMATION ══════════════ -->
+<div class="sec" id="pose">
+  <div class="sec-hd">
+    <h2>Pose Estimation — PnP & solvePnP</h2>
+    <p>Given known 3D points and their 2D projections, recover the camera's position and orientation (6-DOF pose). Critical for AR, robot grasping, and visual servoing.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card grid-wide">
+      <div class="card-hd">
+        <span class="card-icon">⟳</span>
+        <span class="card-title">PnP — Perspective-n-Point Problem</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">6-DOF POSE</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-pnp" height="260"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>P3P:</strong> Minimum case — 3 points give up to 4 solutions. <strong>EPnP (Efficient PnP):</strong> Expresses all world points as weighted sum of 4 virtual control points. Converts to linear system, solves with SVD. O(n) — best for large n.<br>
+          <strong>Rodrigues rotation:</strong> cv2 uses rotation vector r where |r| = angle and r/|r| = axis. Compact 3D representation. <code>cv2.Rodrigues(rvec)</code> converts to 3×3 rotation matrix.<br>
+          <strong>RANSAC+PnP:</strong> For feature matching where many correspondences are wrong — iterate PnP on random subsets, pick best inlier set.</p>
+        </div>
+        <div class="info-grid">
+          <div class="formula">Minimize reprojection error:
+  Σ ||x_i - π(K, R, t, X_i)||²
+  x_i = observed 2D  X_i = known 3D
+
+π(.) = projection function:
+  x' = K · [R|t] · X
+  u = fx·(R·X+t)_x / (R·X+t)_z + cx
+
+Rodrigues: R = I + sin(θ)·K̂ + (1-cos(θ))·K̂²
+  where K̂ = skew(r/|r|), θ = |r|</div>
+          <div>
+            <div class="code" style="margin-top:0">
+<span class="cm"># 3D-2D correspondences (e.g. ArUco marker)</span>
+<span class="v">objpts</span> = <span class="v">np</span>.<span class="fn">array</span>([<span class="cm"># known 3D coords in object frame</span>
+    [<span class="num">0</span>,<span class="num">0</span>,<span class="num">0</span>],[<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>],[<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>],[<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>]], dtype=<span class="v">np.float32</span>)
+<span class="v">ret</span>,<span class="v">rvec</span>,<span class="v">tvec</span> = <span class="fn">cv2.solvePnP</span>(
+    <span class="v">objpts</span>, <span class="v">imgpts</span>, <span class="v">K</span>, <span class="v">dist</span>,
+    <span class="v">flags</span>=<span class="v">cv2.SOLVEPNP_EPNP</span>)
+<span class="v">R</span>, <span class="v">_</span> = <span class="fn">cv2.Rodrigues</span>(<span class="v">rvec</span>)
+<span class="cm"># Draw axis</span>
+<span class="fn">cv2.projectPoints</span>(<span class="v">axis_3d</span>,<span class="v">rvec</span>,<span class="v">tvec</span>,<span class="v">K</span>,<span class="v">dist</span>)
+
+<span class="cm"># With RANSAC (robust to outliers)</span>
+<span class="v">ret</span>,<span class="v">rvec</span>,<span class="v">tvec</span>,<span class="v">inliers</span> = <span class="fn">cv2.solvePnPRansac</span>(
+    <span class="v">objpts</span>, <span class="v">imgpts</span>, <span class="v">K</span>, <span class="v">dist</span>)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊞</span>
+        <span class="card-title">ArUco Marker Detection</span>
+        <span class="card-badge" style="color:var(--green);border-color:rgba(0,255,157,0.3)">FIDUCIAL</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-aruco" height="200"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Pipeline:</strong> (1) Find marker candidates via adaptive threshold + contour detection for quadrilaterals. (2) Perspective-normalize candidate to 6×6 grid. (3) Read bit pattern and match to dictionary. (4) Sub-pixel refine corners. (5) solvePnP for 6-DOF pose.<br>
+          Used extensively in robotics for ground truth, camera-to-robot calibration, and bin-picking.</p>
+        </div>
+        <div class="formula">Detection pipeline:
+  1. Adaptive threshold (handles uneven lighting)
+  2. findContours → filter quadrilaterals
+  3. getPerspectiveTransform → normalize to 6×6
+  4. Read bits → match to cv2.aruco dictionary
+  5. cornerSubPix → refine to 0.1px
+  6. solvePnP(marker_3d, corners_2d, K, dist)
+
+aruco_dict = cv2.aruco.getPredefinedDictionary(
+    cv2.aruco.DICT_4X4_50)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⊕</span>
+        <span class="card-title">Essential & Fundamental Matrix</span>
+        <span class="card-badge" style="color:var(--pink);border-color:rgba(255,136,204,0.3)">RELATIVE POSE</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-essential" height="200"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Without calibration:</strong> F (Fundamental) encodes epipolar geometry from pixel matches alone (8-point algorithm).<br>
+          <strong>With calibration:</strong> E (Essential) encodes camera rotation R and translation t (up to scale). Decompose E with SVD → 4 candidate (R,t) pairs → triangulate to resolve sign ambiguity (cheirality check).</p>
+        </div>
+        <div class="formula">F from 8+ point correspondences:
+  x'ᵀFx = 0  (epipolar constraint)
+  A·f = 0 → SVD → enforce rank-2
+
+E = Kᵀ · F · K  (if calibrated)
+Decompose: SVD(E) = UΣVᵀ
+  R = U · W · Vᵀ  (or U · Wᵀ · Vᵀ)
+  t = U[:,2]       (up to sign)
+→ 4 solutions, test with triangulation
+
+E,mask = cv2.findEssentialMat(pts1, pts2, K)
+R,t = cv2.recoverPose(E, pts1, pts2, K)</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ SLAM ══════════════ -->
+<div class="sec" id="slam">
+  <div class="sec-hd">
+    <h2>Visual SLAM — Simultaneous Localization & Mapping</h2>
+    <p>A robot must build a map of an unknown environment while simultaneously figuring out where it is in that map. Visual SLAM uses cameras as the primary sensor.</p>
+  </div>
+  <div class="grid">
+
+    <div class="card grid-wide">
+      <div class="card-hd">
+        <span class="card-icon">⟳</span>
+        <span class="card-title">Visual SLAM Pipeline — Full Architecture</span>
+        <span class="card-badge" style="color:var(--cyan);border-color:rgba(0,217,255,0.3)">SYSTEM</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-slam" height="280"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Front-end (Tracking):</strong> Per-frame. Detect/match features → estimate camera motion with PnP or Essential Matrix. Fast, local, may drift.<br>
+          <strong>Back-end (Optimization):</strong> Bundle adjustment minimizes reprojection error over all keyframes simultaneously. This is the expensive part — solved with Levenberg-Marquardt over a sparse graph.<br>
+          <strong>Loop Closure:</strong> Recognize a previously visited place (using BoW vocabulary tree). Add constraint to graph → correct accumulated drift globally.<br>
+          <strong>Key insight:</strong> Without loop closure, error accumulates proportional to distance traveled. Loop closure constrains the entire trajectory at once.</p>
+        </div>
+        <div class="info-grid">
+          <div class="formula">Bundle Adjustment (core optimization):
+min Σ_i Σ_j ρ(||x_ij - π(K,R_i,t_i,X_j)||²)
+ R,t,X
+
+x_ij = observed 2D keypoint j in frame i
+π(.) = projection function
+X_j  = 3D landmark position
+ρ(.) = robust loss (Huber) against outliers
+
+Solved with: Sparse Levenberg-Marquardt
+Graph: Poses + Landmarks as nodes
+       Observations as edges (factor graph)</div>
+          <div>
+            <div class="formula" style="margin-top:0">Bag-of-Words (Loop Detection):
+Visual vocabulary: cluster descriptors
+  into K visual words (K-Means tree)
+Each image = histogram over visual words
+  bow_vec[word_id] += tf-idf weight
+
+Similarity score: DBoW2 score(q, db)
+  If score > threshold → loop candidate
+  Verify with geometric check (PnP)
+
+Key libraries:
+  g2o / GTSAM  → factor graph optimization
+  DBoW2        → place recognition
+  ORB-SLAM3    → complete system</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">⬡</span>
+        <span class="card-title">ICP — Iterative Closest Point</span>
+        <span class="card-badge" style="color:var(--orange);border-color:rgba(255,87,51,0.3)">POINT CLOUD</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-icp" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Problem:</strong> Align two 3D point clouds (e.g., LiDAR scan to map). No known correspondences.<br>
+          <strong>ICP bootstrap:</strong> Associate nearest neighbors → compute optimal rigid transform (SVD on covariance) → apply → repeat. Converges to local minimum — needs good initial guess.<br>
+          <strong>Optimal transform from SVD:</strong> H = Σ (pi - p̄)(qi - q̄)ᵀ → SVD(H) = UΣVᵀ → R = VUᵀ.</p>
+        </div>
+        <div class="formula">ICP(source_pts P, target_pts Q):
+  while not converged:
+    1. For each p in P, find nearest q in Q
+    2. Compute centroids p̄, q̄
+    3. H = Σ (p_i-p̄)(q_i-q̄)ᵀ  ← covariance
+    4. U,Σ,Vᵀ = SVD(H)
+    5. R = V·Uᵀ    t = q̄ - R·p̄
+    6. Apply: P = R·P + t
+    7. Check: if ||Δt||<ε: break</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-icon">◌</span>
+        <span class="card-title">Epipolar Odometry / Optical Flow VO</span>
+        <span class="card-badge" style="color:var(--green);border-color:rgba(0,255,157,0.3)">VISUAL ODOMETRY</span>
+      </div>
+      <div class="card-body">
+        <canvas id="c-vo" height="220"></canvas>
+        <div class="think">
+          <div class="think-label">⬡ THINKING PROCESS</div>
+          <p><strong>Visual Odometry (VO):</strong> Estimate camera motion frame-to-frame using feature tracks.<br>
+          <strong>Monocular VO pipeline:</strong> Track features with LK → compute Essential Matrix → recover R,t → triangulate new landmarks → scale ambiguity from last step or IMU.<br>
+          <strong>Scale problem:</strong> Monocular can't recover absolute scale. Solution: known marker size, stereo, or IMU fusion.</p>
+        </div>
+        <div class="formula">Frame-to-frame VO:
+  1. Track features: LK optical flow
+  2. RANSAC + Essential Matrix → R, t (unit scale)
+  3. Triangulate tracked points → 3D map
+  4. Next frame: PnP on existing 3D points
+     → absolute scale recovered!
+  5. Periodically optimize with local BA
+
+Scale recovery:
+  d_meas = ||t|| (unit vector, unknown scale)
+  d_real = known_object_size / img_pixels</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════
+const $ = id => document.getElementById(id);
+
+function show(id) {
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('act'));
+  $(id).classList.add('act');
+  event.target.classList.add('act');
+  setTimeout(drawAll, 50);
+}
+
+function setBtn(grp, btn) {
+  grp.forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+}
+
+// Canvas setup helper
+function setup(id, h) {
+  const c = $(id); if(!c) return null;
+  c.height = h || 220;
+  const W = c.clientWidth || 340;
+  c.width = W;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#060810'; ctx.fillRect(0,0,c.width,c.height);
+  return {ctx, W:c.width, H:c.height};
+}
+
+// Draw text with background
+function label(ctx, text, x, y, color='#9090b0', size=9) {
+  ctx.font = `${size}px IBM Plex Mono, monospace`;
+  ctx.fillStyle = color; ctx.fillText(text, x, y);
+}
+
+// Arrow helper
+function arrow(ctx, x1,y1,x2,y2,color='#00d9ff',w=1.5) {
+  const dx=x2-x1, dy=y2-y1, len=Math.sqrt(dx*dx+dy*dy);
+  ctx.strokeStyle=color; ctx.lineWidth=w;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  const ang=Math.atan2(dy,dx);
+  ctx.fillStyle=color; ctx.beginPath();
+  ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-8*Math.cos(ang-0.4),y2-8*Math.sin(ang-0.4));
+  ctx.lineTo(x2-8*Math.cos(ang+0.4),y2-8*Math.sin(ang+0.4));
+  ctx.closePath(); ctx.fill();
+}
+
+// ═══════════════════════════════════════
+// HOUGH LINE
+// ═══════════════════════════════════════
+let hlMode = 'normal';
+function setHL(mode, btn) {
+  hlMode = mode;
+  document.querySelectorAll('#lines .card:first-child .btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  drawHoughLine();
+}
+
+function drawHoughLine() {
+  const r = setup('c-hough-line', 220); if(!r) return;
+  const {ctx,W,H} = r;
+
+  if(hlMode === 'accum') {
+    // Draw accumulator space visualization
+    label(ctx, '(ρ,θ) ACCUMULATOR SPACE', 8, 16, '#555570');
+
+    const rhoMax = Math.sqrt(W*W+H*H)/3;
+    const thetaN = 90, rhoN = 80;
+
+    // Edge points (simulated line)
+    const edgePts = [];
+    for(let i=0;i<12;i++) edgePts.push({x:30+i*18, y:60+i*8});
+    for(let i=0;i<8;i++) edgePts.push({x:20+i*22, y:H-40-i*5});
+
+    // Vote
+    const acc = new Float32Array(thetaN*rhoN);
+    edgePts.forEach(({x,y}) => {
+      for(let ti=0;ti<thetaN;ti++) {
+        const theta = ti*Math.PI/thetaN;
+        const rho = x*Math.cos(theta) + y*Math.sin(theta);
+        const ri = Math.round((rho+rhoMax)/(2*rhoMax)*(rhoN-1));
+        if(ri>=0&&ri<rhoN) acc[ri*thetaN+ti] += 1;
+      }
+    });
+    const maxA = Math.max(...acc);
+
+    for(let ri=0;ri<rhoN;ri++) for(let ti=0;ti<thetaN;ti++) {
+      const v = acc[ri*thetaN+ti]/maxA;
+      if(v>0.05) {
+        const px = 20+ti/thetaN*(W-40), py = 30+ri/rhoN*(H-50);
+        ctx.fillStyle=`rgba(0,217,255,${v*0.9})`;
+        ctx.fillRect(px,py,3,3);
+      }
+    }
+
+    label(ctx,'θ →',W-30,H-8,'#555570');
+    label(ctx,'ρ',6,H/2,'#555570');
+    label(ctx,'Each point = sinusoid in (ρ,θ)',8,H-8,'#555570',8);
+
+    // Mark peaks
+    ctx.strokeStyle='#ff5733'; ctx.lineWidth=1.5;
+    [0.35,0.72].forEach(r => {
+      const px=20+r*(W-40), py=30+0.4*(H-50);
+      ctx.beginPath(); ctx.arc(px,py,7,0,Math.PI*2); ctx.stroke();
+    });
+    return;
+  }
+
+  // Image side — draw some edge-like lines
+  const lines_img = [
+    {x1:30,y1:40,x2:W/2-20,y2:H-50, angle:Math.atan2(H-90,W/2-50)},
+    {x1:W/2+20,y1:30,x2:W-30,y2:60},
+    {x1:50,y1:H-30,x2:W-60,y2:H-70}
+  ];
+
+  // Background scene
+  ctx.strokeStyle='#1e1e28'; ctx.lineWidth=1;
+  for(let i=0;i<5;i++){
+    ctx.beginPath(); ctx.moveTo(W*i/4,0); ctx.lineTo(W*i/4,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,H*i/4); ctx.lineTo(W,H*i/4); ctx.stroke();
+  }
+
+  // Draw edge pixels
+  lines_img.forEach((l,i)=>{
+    const steps = 30;
+    const colors = ['#00d9ff','#ff5733','#00ff9d'];
+    for(let s=0;s<steps;s++){
+      const t = s/steps;
+      const x = l.x1+(l.x2-l.x1)*t + (Math.random()-0.5)*4;
+      const y = l.y1+(l.y2-l.y1)*t + (Math.random()-0.5)*4;
+      ctx.fillStyle=colors[i]+'aa'; ctx.fillRect(x-1,y-1,2,2);
+    }
+  });
+
+  // Overlay detected lines
+  if(hlMode === 'normal') {
+    lines_img.forEach((l,i)=>{
+      const colors=['#00d9ff','#ff5733','#00ff9d'];
+      ctx.strokeStyle=colors[i]; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(l.x1,l.y1); ctx.lineTo(l.x2,l.y2); ctx.stroke();
+    });
+    label(ctx,'Standard HoughLines → infinite lines (ρ,θ)',8,H-8,'#555570',8);
+    // Show ρ,θ labels
+    ctx.strokeStyle='rgba(255,204,0,0.5)'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+    const lx=(lines_img[0].x1+lines_img[0].x2)/2, ly=(lines_img[0].y1+lines_img[0].y2)/2;
+    ctx.beginPath(); ctx.moveTo(W/2,H/2); ctx.lineTo(lx,ly); ctx.stroke();
+    ctx.setLineDash([]);
+    label(ctx,'ρ',W/2+4,H/2-4,'#ffcc00',9);
+  } else {
+    // Probabilistic — segments with endpoints
+    lines_img.forEach((l,i)=>{
+      const colors=['#00d9ff','#ff5733','#00ff9d'];
+      ctx.strokeStyle=colors[i]; ctx.lineWidth=2.5;
+      const seg = {x1:l.x1+10,y1:l.y1+5,x2:l.x2-10,y2:l.y2-5};
+      ctx.beginPath(); ctx.moveTo(seg.x1,seg.y1); ctx.lineTo(seg.x2,seg.y2); ctx.stroke();
+      // Endpoints
+      ctx.fillStyle=colors[i];
+      ctx.beginPath(); ctx.arc(seg.x1,seg.y1,4,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(seg.x2,seg.y2,4,0,Math.PI*2); ctx.fill();
+    });
+    label(ctx,'Probabilistic HoughLinesP → line segments (x1,y1,x2,y2)',8,H-8,'#555570',8);
+  }
+  label(ctx,'EDGE PIXELS',8,16,'#555570');
+}
+
+// ═══════════════════════════════════════
+// HOUGH CIRCLE
+// ═══════════════════════════════════════
+function updateHC() {
+  $('sv-cr').textContent = $('sl-cr').value;
+  drawHoughCircle();
+}
+
+function drawHoughCircle() {
+  const r = setup('c-hough-circle',220); if(!r) return;
+  const {ctx,W,H} = r;
+  const minR = +$('sl-cr').value;
+
+  // Draw circles
+  const circles = [
+    {cx:W*0.28,cy:H*0.42,r:35},
+    {cx:W*0.62,cy:H*0.35,r:22},
+    {cx:W*0.5,cy:H*0.72,r:45},
+  ].filter(c=>c.r>=minR);
+
+  // Edge pixels on circle
+  circles.forEach((c,i) => {
+    const colors=['#00d9ff','#ff5733','#00ff9d'];
+    // Gradient arrows
+    for(let a=0;a<360;a+=24) {
+      const rad=a*Math.PI/180;
+      const ex=c.cx+c.r*Math.cos(rad), ey=c.cy+c.r*Math.sin(rad);
+      ctx.fillStyle=colors[i]+'99'; ctx.fillRect(ex-2,ey-2,4,4);
+      // gradient vote arrow
+      ctx.strokeStyle=colors[i]+'33'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(ex,ey); ctx.lineTo(c.cx,c.cy); ctx.stroke();
+    }
+    // Actual circle
+    ctx.strokeStyle=colors[i]; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(c.cx,c.cy,c.r,0,Math.PI*2); ctx.stroke();
+    // Center mark
+    ctx.fillStyle=colors[i];
+    ctx.beginPath(); ctx.arc(c.cx,c.cy,4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(c.cx-8,c.cy); ctx.lineTo(c.cx+8,c.cy);
+    ctx.moveTo(c.cx,c.cy-8); ctx.lineTo(c.cx,c.cy+8);
+    ctx.strokeStyle=colors[i]; ctx.lineWidth=1.5; ctx.stroke();
+    label(ctx,`r≈${c.r}`,c.cx+c.r+3,c.cy,colors[i],9);
+  });
+
+  label(ctx,'HOUGH CIRCLE — gradient votes toward center',8,16,'#555570',8);
+  label(ctx,`minRadius filter: ${minR}px`,8,H-8,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// RANSAC
+// ═══════════════════════════════════════
+let ransacData = null, ransacStepIdx = 0, ransacIterations = [];
+
+function generateRANSACData() {
+  const pts = [];
+  // Inliers on a line y = 0.6x + 40 + noise
+  for(let i=0;i<20;i++) {
+    const x = 20+Math.random()*260;
+    pts.push({x, y:0.5*x+50+(Math.random()-0.5)*18, outlier:false});
+  }
+  // Outliers
+  for(let i=0;i<8;i++) {
+    pts.push({x:30+Math.random()*240, y:40+Math.random()*140, outlier:true});
+  }
+  return pts;
+}
+
+function fitLine(p1,p2) {
+  const dx=p2.x-p1.x, dy=p2.y-p1.y;
+  const len=Math.sqrt(dx*dx+dy*dy);
+  return {a:dy/len, b:-dx/len, c:-(dy*p1.x-dx*p1.y)/len};
+}
+
+function distToLine(p,l) {
+  return Math.abs(l.a*p.x+l.b*p.y+l.c);
+}
+
+function runRANSAC() {
+  ransacData = generateRANSACData();
+  ransacStepIdx = 0;
+  ransacIterations = [];
+  const eps = 15;
+  for(let iter=0;iter<8;iter++) {
+    const i1=Math.floor(Math.random()*ransacData.length);
+    let i2=i1;
+    while(i2===i1) i2=Math.floor(Math.random()*ransacData.length);
+    const model=fitLine(ransacData[i1],ransacData[i2]);
+    const inliers=ransacData.filter(p=>distToLine(p,model)<eps);
+    ransacIterations.push({p1:ransacData[i1],p2:ransacData[i2],model,inliers,iter});
+  }
+  ransacIterations.sort((a,b)=>b.inliers.length-a.inliers.length);
+  drawRANSAC();
+}
+
+function stepRANSAC() {
+  ransacStepIdx=(ransacStepIdx+1)%ransacIterations.length;
+  drawRANSAC();
+}
+
+function drawRANSAC() {
+  const r = setup('c-ransac',220); if(!r) return;
+  const {ctx,W,H} = r;
+
+  if(!ransacData) { runRANSAC(); return; }
+
+  const it = ransacIterations[ransacStepIdx];
+  const isBest = ransacStepIdx===0;
+
+  // Draw all points
+  ransacData.forEach(p => {
+    const inInlier = it.inliers.includes(p);
+    ctx.fillStyle = inInlier ? '#00ff9d' : '#ff5733';
+    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill();
+    if(p.outlier && !inInlier) {
+      ctx.strokeStyle='#ff5733aa'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,8,0,Math.PI*2); ctx.stroke();
+    }
+  });
+
+  // Sampled points (the 2 used for this iteration)
+  ctx.strokeStyle='#ffcc00'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(it.p1.x,it.p1.y,7,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(it.p2.x,it.p2.y,7,0,Math.PI*2); ctx.stroke();
+
+  // Draw model line
+  const {a,b,c} = it.model;
+  const lineColor = isBest ? '#00d9ff' : '#ff573388';
+  ctx.strokeStyle=lineColor; ctx.lineWidth=isBest?2.5:1.5;
+  const x0=0, y0=(-c-a*x0)/b;
+  const x1=W, y1=(-c-a*x1)/b;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(x1,y1); ctx.stroke();
+
+  // Inlier count
+  label(ctx, `Iter ${ransacStepIdx+1}/${ransacIterations.length}`, 8, 16, '#555570', 9);
+  label(ctx, `Inliers: ${it.inliers.length}/${ransacData.length}`, 8, 30, isBest?'#00d9ff':'#9090b0', 10);
+  if(isBest) label(ctx,'← BEST MODEL',100,30,'#00d9ff',9);
+
+  // Legend
+  ctx.fillStyle='#00ff9d'; ctx.fillRect(W-100,8,8,8);
+  label(ctx,'inlier',W-88,17,'#00ff9d',8);
+  ctx.fillStyle='#ff5733'; ctx.fillRect(W-100,22,8,8);
+  label(ctx,'outlier',W-88,31,'#ff5733',8);
+  ctx.strokeStyle='#ffcc00'; ctx.strokeRect(W-100,36,8,8);
+  label(ctx,'sample',W-88,45,'#ffcc00',8);
+}
+
+// ═══════════════════════════════════════
+// SHAPE FITTING
+// ═══════════════════════════════════════
+let shapeMode='poly';
+function setShape(mode,btn) {
+  shapeMode=mode;
+  document.querySelectorAll('#lines .card:nth-child(4) .btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  const thinks={
+    poly:'approxPolyDP uses Ramer-Douglas-Peucker: finds the point farthest from the line segment between endpoints. If > ε, it\'s kept as a vertex. Recurse on both halves. Result: a polygon that stays within ε pixels of the original contour.',
+    ellipse:'fitEllipse minimizes algebraic distance to conic Ax²+Bxy+Cy²+Dx+Ey+F=0 with constraint 4AC-B²=1. Solved via generalized eigenvalue problem. Robust to noise — minimum 5 points required.',
+    hull:'Convex hull (Graham scan / Jarvis march): find the smallest convex polygon containing all contour points. O(n log n). Useful for convexity defects — the gaps between hull and contour mark concavities (e.g. finger gaps in hand detection).',
+    minarc:'minAreaRect finds the rectangle of minimum area enclosing the contour. Uses rotating calipers on convex hull. Returns (center, (width,height), angle). Used for object orientation and aspect ratio checks in industrial inspection.'
+  };
+  const formulas={
+    poly:`RDP algorithm: O(n log n) average\nε controls approximation tightness:\n  Small ε → many vertices (close to contour)\n  Large ε → few vertices (rough polygon)\ncv2.approxPolyDP(contour, epsilon, closed=True)`,
+    ellipse:`Conic: Ax²+Bxy+Cy²+Dx+Ey=1\nMatrix form: xᵀ·M·x = 0\nSolve: min ||Mx|| s.t. constraint\nGeneralized eigenvalue: S₁·v = λ·S₂·v\n(S₁,S₂ = scatter matrices of points)\n→ ellipse params (cx,cy,a,b,angle)`,
+    hull:`Graham scan:\n1. Find lowest point p0\n2. Sort by polar angle from p0\n3. Walk points; pop stack if right turn\n   only keep left turns (CCW)\nO(n log n) — standard in practice\ncv2.convexHull(contour)\ncv2.convexityDefects(cnt, hull)`,
+    minarc:`Rotating calipers algorithm:\n1. Compute convex hull\n2. For each edge, find\n   farthest (antipodal) point\n3. Rotate flush → min bounding rect\nReturns: center, (w,h), rotation angle\ncv2.minAreaRect(contour)\ncv2.boxPoints(rect)  → 4 corners`
+  };
+  $('shape-think').textContent=thinks[mode];
+  $('shape-formula').textContent=formulas[mode];
+  drawShapes();
+}
+
+function makeStarShape(cx,cy,R,r,n=6) {
+  const pts=[];
+  for(let i=0;i<n*2;i++){
+    const a=i*Math.PI/n - Math.PI/2;
+    const rad=i%2===0?R:r;
+    pts.push({x:cx+rad*Math.cos(a),y:cy+rad*Math.sin(a)});
+  }
+  return pts;
+}
+
+function drawShapes() {
+  const r=setup('c-shapes',220); if(!r) return;
+  const {ctx,W,H}=r;
+  const cx=W/2, cy=H/2;
+
+  // Draw base shape (irregular polygon/blob)
+  const basePts=makeStarShape(cx,cy,70,40,7);
+
+  // Slightly noisy contour
+  const noisyPts=[];
+  basePts.forEach((p,i)=>{
+    noisyPts.push({x:p.x+(Math.random()-0.5)*8, y:p.y+(Math.random()-0.5)*8});
+  });
+
+  // Draw noisy contour
+  ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=1.5;
+  ctx.beginPath(); noisyPts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.closePath(); ctx.stroke();
+  ctx.fillStyle='rgba(30,30,40,0.8)'; ctx.fill();
+
+  if(shapeMode==='poly') {
+    // Show RDP approximation
+    const eps=14;
+    function rdp(pts,eps){
+      if(pts.length<3) return pts;
+      let maxD=0,maxI=0;
+      const p1=pts[0],p2=pts[pts.length-1];
+      const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
+      for(let i=1;i<pts.length-1;i++){
+        const d=Math.abs((dy*(pts[i].x-p1.x)-dx*(pts[i].y-p1.y))/len);
+        if(d>maxD){maxD=d;maxI=i;}
+      }
+      if(maxD>eps){
+        const l1=rdp(pts.slice(0,maxI+1),eps);
+        const l2=rdp(pts.slice(maxI),eps);
+        return [...l1.slice(0,-1),...l2];
+      }
+      return [p1,p2];
+    }
+    const approx=rdp(noisyPts.concat([noisyPts[0]]),eps);
+    ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+    ctx.beginPath(); approx.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath(); ctx.stroke();
+    approx.forEach(p=>{
+      ctx.fillStyle='#00d9ff'; ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill();
+    });
+    label(ctx,`approxPolyDP  ε=${eps}  → ${approx.length-1} vertices`,8,H-8,'#00d9ff',8);
+
+  } else if(shapeMode==='ellipse') {
+    // Fit ellipse
+    const {cx:ex,cy:ey,a,b,ang}=fitEllipseSimple(noisyPts);
+    ctx.strokeStyle='#ff5733'; ctx.lineWidth=2;
+    ctx.save(); ctx.translate(ex,ey); ctx.rotate(ang);
+    ctx.beginPath(); ctx.ellipse(0,0,a,b,0,0,Math.PI*2); ctx.stroke();
+    ctx.restore();
+    // Center
+    ctx.fillStyle='#ff5733'; ctx.beginPath(); ctx.arc(ex,ey,4,0,Math.PI*2); ctx.fill();
+    label(ctx,`fitEllipse  a≈${a|0} b≈${b|0} θ≈${(ang*180/Math.PI)|0}°`,8,H-8,'#ff5733',8);
+
+  } else if(shapeMode==='hull') {
+    // Convex hull (simple)
+    const hull=convexHull(noisyPts);
+    ctx.strokeStyle='#00ff9d'; ctx.lineWidth=2.5;
+    ctx.beginPath(); hull.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath(); ctx.stroke();
+    // Show defects
+    noisyPts.forEach(p=>{
+      // find closest hull edge, show if significant gap
+      ctx.fillStyle='rgba(0,255,157,0.15)';
+    });
+    label(ctx,`convexHull  ${hull.length} points  + defects shown`,8,H-8,'#00ff9d',8);
+
+  } else {
+    // Min area rect
+    const hull=convexHull(noisyPts);
+    const rect=minAreaRectSimple(hull);
+    ctx.strokeStyle='#cc88ff'; ctx.lineWidth=2;
+    ctx.beginPath(); rect.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+    ctx.closePath(); ctx.stroke();
+    const rw=dist2(rect[0],rect[1])|0, rh=dist2(rect[1],rect[2])|0;
+    label(ctx,`minAreaRect  ${rw}×${rh}px`,8,H-8,'#cc88ff',8);
+  }
+}
+
+function fitEllipseSimple(pts) {
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const cx=(Math.max(...xs)+Math.min(...xs))/2;
+  const cy=(Math.max(...ys)+Math.min(...ys))/2;
+  const a=(Math.max(...xs)-Math.min(...xs))/2*0.9;
+  const b=(Math.max(...ys)-Math.min(...ys))/2*0.8;
+  return {cx,cy,a,b,ang:0.2};
+}
+
+function dist2(a,b){return Math.sqrt((a.x-b.x)**2+(a.y-b.y)**2);}
+
+function convexHull(pts) {
+  const sorted=[...pts].sort((a,b)=>a.x!==b.x?a.x-b.x:a.y-b.y);
+  const cross=(o,a,b)=>(a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x);
+  const lower=[],upper=[];
+  for(const p of sorted){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],p)<=0)lower.pop();lower.push(p);}
+  for(const p of [...sorted].reverse()){while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],p)<=0)upper.pop();upper.push(p);}
+  lower.pop(); upper.pop(); return [...lower,...upper];
+}
+
+function minAreaRectSimple(hull) {
+  let minA=Infinity, best=null;
+  for(let i=0;i<hull.length;i++){
+    const a=hull[i],b=hull[(i+1)%hull.length];
+    const ang=Math.atan2(b.y-a.y,b.x-a.x);
+    const c=Math.cos(-ang),s=Math.sin(-ang);
+    const rot=hull.map(p=>({x:p.x*c-p.y*s,y:p.x*s+p.y*c}));
+    const xs=rot.map(p=>p.x),ys=rot.map(p=>p.y);
+    const w=Math.max(...xs)-Math.min(...xs),h=Math.max(...ys)-Math.min(...ys);
+    if(w*h<minA){minA=w*h;best={ang,minX:Math.min(...xs),maxX:Math.max(...xs),minY:Math.min(...ys),maxY:Math.max(...ys)};}
+  }
+  if(!best) return hull.slice(0,4);
+  const {ang,minX,maxX,minY,maxY}=best;
+  const c=Math.cos(ang),s=Math.sin(ang);
+  return [{x:minX*c-minY*s,y:minX*s+minY*c},{x:maxX*c-minY*s,y:maxX*s+minY*c},{x:maxX*c-maxY*s,y:maxX*s+maxY*c},{x:minX*c-maxY*s,y:minX*s+maxY*c}];
+}
+
+// ═══════════════════════════════════════
+// PERSPECTIVE
+// ═══════════════════════════════════════
+let perspMode='warp';
+function setPerspMode(mode,btn) {
+  perspMode=mode;
+  document.querySelectorAll('#perspective .ctrls .btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  const thinks={
+    warp:'Document scanning: A flat document viewed at an angle looks like a trapezoid. We know it should be a rectangle. Pick 4 corner correspondences and solve for H. This is a 2D projective transform that un-does the camera angle. The result is a rectified, metrically correct view.',
+    ar:'AR overlay: Detect a marker (ArUco, chessboard). Compute H between marker plane and image. Project virtual 3D content using the camera matrix K and the marker pose. Any point on the marker plane can be mapped to image coordinates.',
+    lane:"Bird's-eye view for lane detection: Apply a fixed perspective warp (calibrated IPM — Inverse Perspective Mapping) that maps the road plane to a top-down view. Lane lines become parallel. Sliding window search finds lanes. Polynomial fit (np.polyfit degree 2) models curve.",
+    stitch:'Panorama stitching: Detect features (SIFT/ORB) in two overlapping images. Match with BFMatcher/FLANN + Lowe ratio test. Find H with findHomography+RANSAC. Warp one image to the other\'s coordinate system. Blend the overlap region.'
+  };
+  const formulas={
+    warp:`cv2.getPerspectiveTransform(src4, dst4) → H\ncv2.warpPerspective(img, H, (w,h))\n\nFor document: src4 = detected corners\n              dst4 = [0,0],[w,0],[w,h],[0,h]`,
+    ar:`solvePnP → rvec, tvec\nProject axis: cv2.projectPoints(axis3D,rvec,tvec,K,dist)\nOverlay virtual objects at marker origin`,
+    lane:`IPM (Inverse Perspective Mapping):\n  src = trapezoid on road (calibrated)\n  dst = rectangle (bird's-eye)\nLane curve: fit polynomial y=ax²+bx+c\n  np.polyfit(y_pixels, x_pixels, deg=2)`,
+    stitch:`H = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC)\nresult = cv2.warpPerspective(img2, H, (W+w, H))\nBlend: alpha mask or Poisson blending`
+  };
+  $('persp-think').textContent=thinks[mode];
+  $('persp-formula').textContent=formulas[mode];
+  drawPersp();
+}
+
+function drawPersp() {
+  const r=setup('c-persp',260); if(!r) return;
+  const {ctx,W,H}=r;
+
+  if(perspMode==='warp') {
+    // Left: skewed document
+    const srcQ=[{x:80,y:40},{x:W/2-20,y:30},{x:W/2+10,y:H-40},{x:50,y:H-30}];
+    ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+    ctx.beginPath(); srcQ.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle='rgba(0,217,255,0.05)'; ctx.fill();
+    // Lines inside (text simulation)
+    for(let i=1;i<6;i++){
+      const t=i/6;
+      const lx1=lerp(srcQ[0].x,srcQ[3].x,t), ly1=lerp(srcQ[0].y,srcQ[3].y,t);
+      const lx2=lerp(srcQ[1].x,srcQ[2].x,t), ly2=lerp(srcQ[1].y,srcQ[2].y,t);
+      ctx.strokeStyle='rgba(0,217,255,0.2)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(lx1,ly1); ctx.lineTo(lx2,ly2); ctx.stroke();
+    }
+    // Corner dots
+    srcQ.forEach((p,i)=>{
+      ctx.fillStyle='#ffcc00'; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+      label(ctx,`p${i}`,p.x+6,p.y-4,'#ffcc00',9);
+    });
+
+    // Arrow
+    arrow(ctx,W/2+20,H/2,W/2+50,H/2,'#555570');
+
+    // Right: rectified
+    const rx=W/2+60, ry=25, rw=W-rx-15, rh=H-50;
+    ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+    ctx.strokeRect(rx,ry,rw,rh);
+    ctx.fillStyle='rgba(0,217,255,0.05)'; ctx.fillRect(rx,ry,rw,rh);
+    for(let i=1;i<6;i++){
+      const y=ry+i/6*rh;
+      ctx.strokeStyle='rgba(0,217,255,0.15)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(rx+10,y); ctx.lineTo(rx+rw-10,y); ctx.stroke();
+    }
+    label(ctx,'SKEWED INPUT',80,H-8,'#555570',8);
+    label(ctx,'RECTIFIED OUTPUT',rx,H-8,'#00d9ff',8);
+    label(ctx,'H = getPerspectiveTransform(src4,dst4)',8,16,'#555570',8);
+
+  } else if(perspMode==='lane') {
+    // Road scene
+    const vp={x:W/2,y:H*0.3};
+    // Sky
+    ctx.fillStyle='#0d1520'; ctx.fillRect(0,0,W,H*0.35);
+    // Road
+    ctx.fillStyle='#1a1a1a'; ctx.fillRect(0,H*0.35,W,H*0.65);
+    // Road markings (perspective)
+    const laneW=W*0.12;
+    for(let i=0;i<5;i++){
+      const t=i/4;
+      const lx=lerp(W/2,W*0.15,t), rx=lerp(W/2,W*0.85,t);
+      const y=lerp(H*0.35,H,t);
+      ctx.strokeStyle=`rgba(255,204,0,${t*0.8+0.1})`; ctx.lineWidth=lerp(0.5,3,t);
+      ctx.beginPath(); ctx.moveTo(lx,y); ctx.lineTo(rx,y); ctx.stroke();
+    }
+    // Lane lines
+    for(let seg=0;seg<5;seg++){
+      const t=seg/5+0.05;
+      const y=lerp(H*0.4,H,t);
+      const lx=lerp(W/2-5,W*0.25,t), rx=lerp(W/2+5,W*0.75,t);
+      ctx.strokeStyle=`rgba(255,255,255,${t*0.9})`; ctx.lineWidth=lerp(0.5,2.5,t);
+      ctx.setLineDash([lerp(2,15,t),lerp(3,20,t)]);
+      ctx.beginPath(); ctx.moveTo(lx,y); ctx.lineTo(lx-2,y+lerp(3,30,t)/4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(rx,y); ctx.lineTo(rx+2,y+lerp(3,30,t)/4); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // IPM trapezoid
+    const trap=[{x:W*0.35,y:H*0.45},{x:W*0.65,y:H*0.45},{x:W*0.9,y:H},{x:W*0.1,y:H}];
+    ctx.strokeStyle='#ff5733'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+    ctx.beginPath(); trap.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath(); ctx.stroke();
+    ctx.setLineDash([]);
+    label(ctx,'IPM src region',W*0.35,H*0.43,'#ff5733',8);
+    label(ctx,"Bird's-eye view warp removes perspective",8,16,'#555570',8);
+
+  } else if(perspMode==='ar') {
+    // Draw checker plane
+    const plane=[{x:60,y:100},{x:W/2,y:60},{x:W-50,y:120},{x:W/2-30,y:200}];
+    ctx.fillStyle='#1a1a28'; ctx.beginPath();
+    plane.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.closePath(); ctx.fill();
+
+    // Grid on plane
+    for(let i=1;i<4;i++){
+      const t=i/4;
+      const lx=lerp(plane[0].x,plane[1].x,t), ly=lerp(plane[0].y,plane[1].y,t);
+      const rx=lerp(plane[3].x,plane[2].x,t), ry=lerp(plane[3].y,plane[2].y,t);
+      const tx=lerp(plane[0].x,plane[3].x,t), ty=lerp(plane[0].y,plane[3].y,t);
+      const bx=lerp(plane[1].x,plane[2].x,t), by=lerp(plane[1].y,plane[2].y,t);
+      ctx.strokeStyle='rgba(100,100,140,0.5)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(rx,ry); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(tx,ty); ctx.lineTo(bx,by); ctx.stroke();
+    }
+
+    // AR axes overlay
+    const origin={x:(plane[0].x+plane[1].x+plane[2].x+plane[3].x)/4,
+                  y:(plane[0].y+plane[1].y+plane[2].y+plane[3].y)/4};
+    arrow(ctx,origin.x,origin.y,origin.x+60,origin.y-10,'#ff5733',2.5);
+    arrow(ctx,origin.x,origin.y,origin.x+10,origin.y-60,'#00ff9d',2.5);
+    arrow(ctx,origin.x,origin.y,origin.x-20,origin.y+30,'#00d9ff',2.5);
+    label(ctx,'X',origin.x+62,origin.y-8,'#ff5733',10);
+    label(ctx,'Y',origin.x+12,origin.y-65,'#00ff9d',10);
+    label(ctx,'Z',origin.x-30,origin.y+34,'#00d9ff',10);
+
+    // Virtual box
+    ctx.strokeStyle='#cc88ff'; ctx.lineWidth=2;
+    const bx=origin.x-20,by=origin.y-60,bw=40,bh=40;
+    ctx.strokeRect(bx,by,bw,bh);
+    for(let i=0;i<4;i++){
+      const xx=[bx,bx+bw,bx+bw,bx][i], yy=[by,by,by+bh,by+bh][i];
+      ctx.beginPath(); ctx.moveTo(xx,yy); ctx.lineTo(xx+15,yy+20); ctx.stroke();
+    }
+    label(ctx,'AR virtual cube projected via solvePnP',8,H-8,'#555570',8);
+
+  } else { // stitch
+    // Two overlapping image frames
+    ctx.fillStyle='#1a1a26'; ctx.fillRect(10,30,W*0.5,H-50);
+    ctx.fillStyle='#16162a'; ctx.fillRect(W*0.35,30,W*0.6,H-50);
+
+    // Matching feature lines
+    const matches=[
+      {x1:W*0.3,y1:80,x2:W*0.45,y2:85},
+      {x1:W*0.28,y1:120,x2:W*0.43,y2:118},
+      {x1:W*0.32,y1:160,x2:W*0.47,y2:162},
+      {x1:W*0.25,y1:H-80,x2:W*0.42,y2:H-78},
+    ];
+    matches.forEach(m=>{
+      ctx.strokeStyle='rgba(255,204,0,0.6)'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(m.x1,m.y1); ctx.lineTo(m.x2,m.y2); ctx.stroke();
+      ctx.fillStyle='#00d9ff'; ctx.beginPath(); ctx.arc(m.x1,m.y1,3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#ff5733'; ctx.beginPath(); ctx.arc(m.x2,m.y2,3,0,Math.PI*2); ctx.fill();
+    });
+
+    // Overlap region
+    ctx.fillStyle='rgba(0,217,255,0.05)'; ctx.fillRect(W*0.35,30,W*0.15,H-50);
+    ctx.strokeStyle='rgba(0,217,255,0.3)'; ctx.lineWidth=1;
+    ctx.setLineDash([4,4]); ctx.strokeRect(W*0.35,30,W*0.15,H-50); ctx.setLineDash([]);
+
+    label(ctx,'Image 1',15,25,'#9090b0',9);
+    label(ctx,'Image 2',W*0.55,25,'#9090b0',9);
+    label(ctx,'Overlap',W*0.36,H/2,'rgba(0,217,255,0.7)',8);
+    label(ctx,'RANSAC feature matching + warpPerspective + blend',8,H-8,'#555570',8);
+  }
+}
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+// ═══════════════════════════════════════
+// DLT
+// ═══════════════════════════════════════
+function drawDLT() {
+  const r=setup('c-dlt',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Show A matrix construction
+  const rows=8, cols=9;
+  const cw=(W-20)/cols, ch=(H-30)/rows;
+  label(ctx,'A matrix (stacked point equations)',8,14,'#555570',9);
+
+  for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){
+    const x=10+j*cw, y=20+i*ch;
+    const isZero=(j<3&&i%2===1)||(j>=3&&j<6&&i%2===0);
+    const isX=(j<3&&i%2===0);
+    const isXp=(j===6||j===7)&&i%2===0;
+    let val='·';
+    if(j===8) val='h';
+    else if(isZero) val='0';
+    else val = ['xi','yi','1','xi','yi','1','xi·xi\'','yi·xi\''][j]||'?';
+
+    ctx.fillStyle=isZero?'#2a2a3a':'#1e1e2a';
+    ctx.fillRect(x,y,cw-1,ch-1);
+    ctx.fillStyle=j===8?'#ffcc00':isZero?'#333355':isXp?'#ff5733':'#00d9ff';
+    ctx.font='8px IBM Plex Mono,monospace';
+    ctx.fillText(val.length>4?val.slice(0,4):val,x+2,y+ch*0.65);
+  }
+
+  // Brace labels
+  label(ctx,'← 4 point pairs × 2 rows',W-130,H-8,'#555570',8);
+  label(ctx,'solve: min|Ah|, |h|=1  →  SVD',8,H-8,'#00d9ff',8);
+}
+
+// ═══════════════════════════════════════
+// TRANSFORM HIERARCHY
+// ═══════════════════════════════════════
+function drawTransformHier() {
+  const r=setup('c-transform-hier',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const transforms=[
+    {name:'Euclidean', dof:3, pts:[{x:50,y:80},{x:90,y:70},{x:110,y:120}], color:'#00ff9d'},
+    {name:'Affine', dof:6, pts:[{x:150,y:60},{x:200,y:55},{x:220,y:130}], color:'#00d9ff'},
+    {name:'Projective', dof:8, pts:[{x:250,y:50},{x:310,y:45},{x:320,y:140}], color:'#cc88ff'},
+  ];
+
+  const baseShape=[{x:0,y:0},{x:40,y:0},{x:40,y:30},{x:0,y:30}];
+
+  transforms.forEach((t,i)=>{
+    const ox=30+i*(W-40)/3, oy=50;
+    ctx.strokeStyle=t.color; ctx.lineWidth=1.5;
+
+    // Draw original as dashed
+    ctx.setLineDash([3,3]); ctx.strokeStyle=t.color+'44';
+    ctx.beginPath();
+    baseShape.forEach((p,j)=>j?ctx.lineTo(ox+p.x,oy+p.y):ctx.moveTo(ox+p.x,oy+p.y));
+    ctx.closePath(); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Transformed shape
+    const transforms_pts={
+      0: baseShape.map(p=>({x:p.x*0.9-p.y*0.15+5,y:p.x*0.15+p.y*0.9+20})),
+      1: baseShape.map(p=>({x:p.x*1.2+p.y*0.3,y:p.x*0.1+p.y*0.8+30})),
+      2: baseShape.map(p=>{const w=1+p.x*0.003+p.y*0.002;return {x:(p.x*1.1+p.y*0.4)/w+5,y:(p.x*0.2+p.y*0.7+40)/w};}),
+    };
+    const tpts=transforms_pts[i];
+    ctx.strokeStyle=t.color; ctx.lineWidth=2;
+    ctx.beginPath(); tpts.forEach((p,j)=>j?ctx.lineTo(ox+p.x,oy+p.y):ctx.moveTo(ox+p.x,oy+p.y));
+    ctx.closePath(); ctx.stroke();
+
+    label(ctx,t.name,ox,H-28,t.color,9);
+    label(ctx,`${t.dof} DOF`,ox,H-14,t.color+'aa',8);
+  });
+
+  label(ctx,'Euclidean ⊂ Similarity ⊂ Affine ⊂ Projective',10,16,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// PINHOLE CAMERA
+// ═══════════════════════════════════════
+function drawPinhole() {
+  const r=setup('c-pinhole',240); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const camX=W*0.15, camY=H*0.5;
+  const planeX=W*0.6, planeH=H*0.6;
+  const imageX=W*0.8, imageH=H*0.5;
+
+  // World points
+  const worldPts=[
+    {x:W*0.08,y:H*0.2,color:'#ff5733'},
+    {x:W*0.08,y:H*0.5,color:'#00d9ff'},
+    {x:W*0.08,y:H*0.8,color:'#00ff9d'},
+  ];
+
+  worldPts.forEach(p=>{
+    ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill();
+    label(ctx,'X',p.x+7,p.y+4,p.color,9);
+  });
+
+  // Camera center
+  ctx.fillStyle='#ffcc00'; ctx.beginPath(); ctx.arc(camX,camY,7,0,Math.PI*2); ctx.fill();
+  label(ctx,'Camera',camX-15,camY-14,'#ffcc00',8);
+
+  // Image plane
+  ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(planeX,H/2-planeH/2); ctx.lineTo(planeX,H/2+planeH/2); ctx.stroke();
+  label(ctx,'Image Plane',planeX-30,H/2+planeH/2+12,'#555570',8);
+
+  // Rays through pinhole to image plane
+  worldPts.forEach(p=>{
+    const t=(planeX-camX)/(p.x-camX);
+    const iy=camY+t*(p.y-camY);
+    ctx.strokeStyle=p.color+'55'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(camX,camY); ctx.stroke();
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(camX,camY); ctx.lineTo(planeX,iy); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(planeX,iy,4,0,Math.PI*2); ctx.fill();
+  });
+
+  // Focal length arrow
+  ctx.strokeStyle='rgba(255,204,0,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(camX,H-20); ctx.lineTo(planeX,H-20); ctx.stroke();
+  label(ctx,'f (focal length)',camX+10,H-10,'#ffcc00',8);
+
+  // K matrix representation
+  label(ctx,'K·[R|t]·X = λ·x  (projection eq)',W*0.5+5,20,'#00d9ff',9);
+
+  // Projected point labels
+  const t_mid=(planeX-camX)/(worldPts[1].x-camX);
+  const iy_mid=camY+t_mid*(worldPts[1].y-camY);
+  label(ctx,'x (pixel)',planeX+6,iy_mid,'#00d9ff',8);
+}
+
+// ═══════════════════════════════════════
+// DISTORTION
+// ═══════════════════════════════════════
+let distMode='barrel';
+function setDist(mode,btn) {
+  distMode=mode;
+  document.querySelectorAll('#calibration .ctrls .btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  drawDistort();
+}
+
+function drawDistort() {
+  const r=setup('c-distort',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const cx=W/2, cy=H/2;
+  const k1 = distMode==='barrel' ? -0.4 : distMode==='pincushion' ? 0.4 : 0;
+
+  // Grid lines
+  const step=25;
+  for(let gx=-4;gx<=4;gx++) for(let gy=-4;gy<=4;gy++) {
+    // Horizontal line
+    const pts=[];
+    for(let t=-4;t<=4;t+=0.2) {
+      const nx=t*step, ny=gy*step;
+      const r2=(nx*nx+ny*ny)/(step*step*16);
+      const d=1+k1*r2+k1*0.3*r2*r2;
+      pts.push({x:cx+nx*d,y:cy+ny*d});
+    }
+    ctx.strokeStyle=`rgba(40,40,60,0.8)`; ctx.lineWidth=1;
+    ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+  }
+  for(let gx=-4;gx<=4;gx++) {
+    const pts=[];
+    for(let t=-4;t<=4;t+=0.2) {
+      const nx=gx*step, ny=t*step;
+      const r2=(nx*nx+ny*ny)/(step*step*16);
+      const d=1+k1*r2+k1*0.3*r2*r2;
+      pts.push({x:cx+nx*d,y:cy+ny*d});
+    }
+    ctx.strokeStyle=`rgba(40,40,60,0.8)`; ctx.lineWidth=1;
+    ctx.beginPath(); pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+  }
+
+  // Ideal (cyan dashed)
+  ctx.strokeStyle='rgba(0,217,255,0.2)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  for(let gx=-4;gx<=4;gx++){
+    ctx.beginPath(); ctx.moveTo(cx+gx*step,cy-4*step); ctx.lineTo(cx+gx*step,cy+4*step); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-4*step,cy+gx*step); ctx.lineTo(cx+4*step,cy+gx*step); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  const modeLabel={barrel:'BARREL (k1<0) — wide angle',pincushion:'PINCUSHION (k1>0) — telephoto',none:'UNDISTORTED (ideal)'};
+  label(ctx,modeLabel[distMode],8,16,'#00d9ff',9);
+  label(ctx,'Dashed = ideal grid',8,H-8,'rgba(0,217,255,0.5)',8);
+}
+
+// ═══════════════════════════════════════
+// CHESSBOARD
+// ═══════════════════════════════════════
+function drawChessboard() {
+  const r=setup('c-chess',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const cols=7,rows=5,sq=Math.min((W-40)/cols,(H-40)/rows)|0;
+  const ox=20, oy=20;
+
+  // Draw checker
+  for(let i=0;i<rows;i++) for(let j=0;j<cols;j++){
+    ctx.fillStyle=(i+j)%2===0?'#f0f0f8':'#1a1a26';
+    ctx.fillRect(ox+j*sq,oy+i*sq,sq,sq);
+  }
+  ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=1; ctx.strokeRect(ox,oy,cols*sq,rows*sq);
+
+  // Inner corners (calibration points)
+  for(let i=1;i<rows;i++) for(let j=1;j<cols;j++){
+    const x=ox+j*sq, y=oy+i*sq;
+    ctx.strokeStyle='#ff5733'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.stroke();
+  }
+
+  // Highlight one corner with subpixel refinement indicator
+  const hx=ox+3*sq, hy=oy+2*sq;
+  ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(hx,hy,9,0,Math.PI*2); ctx.stroke();
+  ctx.strokeStyle='rgba(0,217,255,0.3)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.rect(hx-15,hy-15,30,30); ctx.stroke();
+
+  label(ctx,`${(cols-1)}×${(rows-1)} inner corners detected`,W-160,H-8,'#ff5733',8);
+  label(ctx,'⊙ cornerSubPix refinement',8,H-8,'#00d9ff',8);
+
+  const ox2=cols*sq+ox+10;
+  label(ctx,`Zhang method:\n≥3 views needed`,ox2,30,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// STEREO
+// ═══════════════════════════════════════
+function drawStereo() {
+  const r=setup('c-stereo',260); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const lCam={x:W*0.2,y:40}, rCam={x:W*0.7,y:40};
+  const pt3d={x:W*0.42,y:H*0.75};
+
+  // Baseline
+  ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(lCam.x-20,lCam.y); ctx.lineTo(rCam.x+20,lCam.y); ctx.stroke();
+  label(ctx,'B (baseline)',W/2-20,lCam.y-8,'#555570',9);
+
+  // Camera frustums
+  [lCam,rCam].forEach((c,i)=>{
+    ctx.fillStyle='#ffcc00'; ctx.beginPath(); ctx.arc(c.x,c.y,7,0,Math.PI*2); ctx.fill();
+    // Frustum lines
+    ctx.strokeStyle='rgba(255,204,0,0.2)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(c.x-60,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(c.x,c.y); ctx.lineTo(c.x+60,H); ctx.stroke();
+    label(ctx,['Left Camera','Right Camera'][i],c.x-25,c.y-12,'#ffcc00',8);
+  });
+
+  // Rays to 3D point
+  ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(lCam.x,lCam.y); ctx.lineTo(pt3d.x,pt3d.y); ctx.stroke();
+  ctx.strokeStyle='#ff5733'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(rCam.x,rCam.y); ctx.lineTo(pt3d.x,pt3d.y); ctx.stroke();
+
+  // 3D point
+  ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.arc(pt3d.x,pt3d.y,6,0,Math.PI*2); ctx.fill();
+  label(ctx,'3D Point P',pt3d.x+8,pt3d.y,'#ffffff',9);
+
+  // Image plane projections
+  const lPlane=lCam.y+20, rPlane=rCam.y+20;
+  ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(lCam.x-60,lPlane); ctx.lineTo(lCam.x+60,lPlane); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(rCam.x-60,lPlane); ctx.lineTo(rCam.x+60,lPlane); ctx.stroke();
+
+  const lProj=lCam.x+12, rProj=rCam.x-14;
+  ctx.fillStyle='#00d9ff'; ctx.fillRect(lProj-2,lPlane-3,4,6);
+  ctx.fillStyle='#ff5733'; ctx.fillRect(rProj-2,lPlane-3,4,6);
+
+  // Disparity arrow
+  ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(rProj,lPlane+15); ctx.lineTo(rCam.x-(rCam.x-lCam.x)*0.45+lProj*0.1,lPlane+15); ctx.stroke();
+  label(ctx,'d = xL - xR',rCam.x-80,lPlane+28,'#00ff9d',9);
+
+  // Depth label
+  ctx.strokeStyle='rgba(0,217,255,0.3)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(lCam.x,lCam.y); ctx.lineTo(lCam.x,pt3d.y); ctx.stroke();
+  ctx.setLineDash([]);
+  label(ctx,'Z = f·B/d',lCam.x+5,lCam.y+(pt3d.y-lCam.y)/2,'#00d9ff',9);
+
+  // Epipolar line
+  ctx.strokeStyle='rgba(204,136,255,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(rCam.x-60,rCam.y+18); ctx.lineTo(rCam.x+60,rCam.y+22); ctx.stroke();
+  label(ctx,'epipolar line',rCam.x+15,rCam.y+22,'#cc88ff',8);
+}
+
+// ═══════════════════════════════════════
+// SGBM / disparity
+// ═══════════════════════════════════════
+function drawSGBM() {
+  const r=setup('c-sgbm',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Simulate disparity map
+  const iw=W,ih=H;
+  const disp=new Uint8ClampedArray(iw*ih*4);
+  for(let y=0;y<ih;y++) for(let x=0;x<iw;x++){
+    // Fake depth: center close, edges far
+    const dx=x-iw/2, dy=y-ih/2;
+    let d=255-Math.min(255,Math.sqrt(dx*dx*0.3+dy*dy*0.5));
+    // Add some structure
+    if(y>ih*0.3&&y<ih*0.7&&x>iw*0.3&&x<iw*0.6) d=Math.min(255,d+60);
+    const cm=dispColormap(d/255);
+    disp[(y*iw+x)*4]=cm[0]; disp[(y*iw+x)*4+1]=cm[1];
+    disp[(y*iw+x)*4+2]=cm[2]; disp[(y*iw+x)*4+3]=200;
+  }
+  const img=ctx.createImageData(iw,ih);
+  for(let i=0;i<disp.length;i++) img.data[i]=disp[i];
+  ctx.putImageData(img,0,0);
+
+  label(ctx,'DISPARITY MAP (simulated)',8,16,'rgba(0,0,0,0.7)',9);
+  label(ctx,'CLOSE (bright)',8,H-20,'#ff5733',9);
+  label(ctx,'FAR (dark)',W-65,H-20,'#00d9ff',9);
+
+  // Colorbar
+  for(let i=0;i<100;i++){
+    const cm=dispColormap(i/100);
+    ctx.fillStyle=`rgb(${cm[0]},${cm[1]},${cm[2]})`;
+    ctx.fillRect(W-20,H-105+i,12,1);
+  }
+}
+
+function dispColormap(t) {
+  if(t<0.5) return [0,Math.round(t*2*255),Math.round((1-t*2)*255)];
+  return [Math.round((t-0.5)*2*255),Math.round((1-(t-0.5)*2)*255),0];
+}
+
+// ═══════════════════════════════════════
+// TRIANGULATE
+// ═══════════════════════════════════════
+function drawTriangulate() {
+  const r=setup('c-triangulate',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const pts3d=[];
+  for(let i=0;i<30;i++) {
+    pts3d.push({
+      x:W*0.2+Math.random()*W*0.6,
+      y:H*0.15+Math.random()*H*0.7,
+      z:0.3+Math.random()*0.7
+    });
+  }
+
+  pts3d.forEach(p=>{
+    const s=p.z;
+    const r=Math.max(2,5*s)|0;
+    const [cr,cg,cb]=dispColormap(p.z);
+    ctx.fillStyle=`rgba(${cr},${cg},${cb},0.8)`;
+    ctx.beginPath(); ctx.arc(p.x,p.y,r,0,Math.PI*2); ctx.fill();
+  });
+
+  label(ctx,'3D POINT CLOUD (color=depth)',8,16,'#555570',9);
+  label(ctx,'triangulatePoints(P1,P2,pts1,pts2)',8,H-8,'#00d9ff',8);
+}
+
+// ═══════════════════════════════════════
+// KALMAN
+// ═══════════════════════════════════════
+let kfState={x:80,y:100,vx:1.2,vy:0.5};
+let kfHistory=[],kfMeasHist=[],kfPredHist=[];
+function initKalman(){
+  kfState={x:80,y:100,vx:1.5,vy:0.4};
+  kfHistory=[]; kfMeasHist=[]; kfPredHist=[];
+}
+
+function drawKalman(){
+  const r=setup('c-kalman',220); if(!r) return;
+  const {ctx,W,H}=r;
+  if(kfHistory.length===0) initKalman();
+
+  // Simulate steps
+  for(let i=0;i<40;i++){
+    // True state
+    kfState.x+=kfState.vx; kfState.y+=kfState.vy;
+    if(kfState.x>W-20){kfState.vx*=-1;} if(kfState.x<20){kfState.vx*=-1;}
+    if(kfState.y>H-20){kfState.vy*=-1;} if(kfState.y<20){kfState.vy*=-1;}
+    kfHistory.push({x:kfState.x,y:kfState.y});
+    // Noisy measurement
+    kfMeasHist.push({x:kfState.x+(Math.random()-0.5)*16,y:kfState.y+(Math.random()-0.5)*16});
+    // Predicted (smoother = Kalman filtered)
+    const len=kfHistory.length;
+    if(len>2){
+      const avg_x=(kfMeasHist.slice(-3).reduce((a,p)=>a+p.x,0)/3);
+      const avg_y=(kfMeasHist.slice(-3).reduce((a,p)=>a+p.y,0)/3);
+      kfPredHist.push({x:avg_x*0.7+kfHistory[len-1].x*0.3,y:avg_y*0.7+kfHistory[len-1].y*0.3});
+    } else kfPredHist.push({x:kfState.x,y:kfState.y});
+  }
+
+  // Draw true path
+  ctx.strokeStyle='rgba(100,100,150,0.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); kfHistory.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+
+  // Draw noisy measurements
+  kfMeasHist.forEach(p=>{
+    ctx.fillStyle='rgba(255,87,51,0.5)'; ctx.fillRect(p.x-2,p.y-2,4,4);
+  });
+
+  // Kalman filtered path
+  ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+  ctx.beginPath(); kfPredHist.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+
+  // Current position
+  const last=kfHistory[kfHistory.length-1];
+  ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(last.x,last.y,10,0,Math.PI*2); ctx.stroke();
+
+  label(ctx,'TRUE path',8,16,'rgba(100,100,150,0.8)',8);
+  ctx.fillStyle='#ff5733'; ctx.fillRect(8,23,8,8); label(ctx,'MEASUREMENTS (noisy)',20,31,'#ff5733',8);
+  ctx.strokeStyle='#00d9ff'; ctx.beginPath(); ctx.moveTo(8,43); ctx.lineTo(20,43); ctx.stroke();
+  label(ctx,'KALMAN estimate',24,46,'#00d9ff',8);
+}
+
+// ═══════════════════════════════════════
+// MEANSHIFT
+// ═══════════════════════════════════════
+function drawMeanShift(){
+  const r=setup('c-meanshift',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Color distribution (simulated HSV backprojection)
+  const iw=W,ih=H;
+  const bp=new Uint8ClampedArray(iw*ih*4);
+  const cx=W*0.45,cy=H*0.45;
+  for(let y=0;y<ih;y++) for(let x=0;x<iw;x++){
+    const d=Math.sqrt((x-cx)**2+(y-cy)**2);
+    const v=Math.max(0,1-d/80)*255;
+    const noise=(Math.random()-0.5)*30;
+    const pv=Math.max(0,Math.min(255,v+noise));
+    bp[(y*iw+x)*4]=pv*0.4; bp[(y*iw+x)*4+1]=pv*0.8;
+    bp[(y*iw+x)*4+2]=pv*0.5; bp[(y*iw+x)*4+3]=180;
+  }
+  const img=ctx.createImageData(iw,ih);
+  for(let i=0;i<bp.length;i++) img.data[i]=bp[i];
+  ctx.putImageData(img,0,0);
+
+  // Iteration steps
+  const steps=[{x:W*0.25,y:H*0.3},{x:W*0.32,y:H*0.35},{x:W*0.38,y:H*0.4},{x:cx-5,y:cy-3},{x:cx,y:cy}];
+  for(let i=1;i<steps.length;i++){
+    arrow(ctx,steps[i-1].x,steps[i-1].y,steps[i].x,steps[i].y,'#ffcc0088',1.5);
+  }
+  // Windows
+  steps.forEach((s,i)=>{
+    const alpha=0.2+i*0.15;
+    ctx.strokeStyle=`rgba(255,204,0,${Math.min(1,alpha)})`; ctx.lineWidth=1.5;
+    const sz=40-i*4;
+    ctx.strokeRect(s.x-sz/2,s.y-sz/2,sz,sz);
+  });
+
+  // Final window
+  ctx.strokeStyle='#ffcc00'; ctx.lineWidth=2.5;
+  ctx.strokeRect(cx-22,cy-22,44,44);
+  ctx.fillStyle='#ffcc00'; ctx.beginPath(); ctx.arc(cx,cy,4,0,Math.PI*2); ctx.fill();
+
+  label(ctx,'BACKPROJECTION (color probability)',8,16,'rgba(0,0,0,0.7)',9);
+  label(ctx,'Mean-shift iterations → mode',8,H-8,'#ffcc00',9);
+}
+
+// ═══════════════════════════════════════
+// IoU / HUNGARIAN
+// ═══════════════════════════════════════
+function drawIoU(){
+  const r=setup('c-iou',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Predicted tracks
+  const tracks=[
+    {x:40,y:50,w:70,h:90,id:1,color:'#00d9ff'},
+    {x:140,y:60,w:80,h:80,id:2,color:'#cc88ff'},
+    {x:250,y:40,w:60,h:100,id:3,color:'#ff5733'},
+  ];
+  // Detections (slightly shifted)
+  const dets=[
+    {x:50,y:55,w:65,h:88,color:'#00ff9d'},
+    {x:148,y:65,w:75,h:78,color:'#00ff9d'},
+    {x:240,y:42,w:65,h:95,color:'#00ff9d'},
+  ];
+
+  // Draw predicted (dashed)
+  tracks.forEach(t=>{
+    ctx.strokeStyle=t.color; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+    ctx.strokeRect(t.x,t.y,t.w,t.h);
+    ctx.setLineDash([]);
+    label(ctx,`T${t.id}`,t.x+3,t.y-3,t.color,9);
+  });
+
+  // Draw detections (solid)
+  dets.forEach((d,i)=>{
+    ctx.strokeStyle=d.color; ctx.lineWidth=2;
+    ctx.strokeRect(d.x,d.y,d.w,d.h);
+  });
+
+  // Draw IoU intersection
+  tracks.forEach((t,i)=>{
+    const d=dets[i];
+    const ix=Math.max(t.x,d.x), iy=Math.max(t.y,d.y);
+    const iw=Math.min(t.x+t.w,d.x+d.w)-ix, ih=Math.min(t.y+t.h,d.y+d.h)-iy;
+    if(iw>0&&ih>0){
+      ctx.fillStyle=t.color+'22'; ctx.fillRect(ix,iy,iw,ih);
+      const area_i=iw*ih, area_u=t.w*t.h+d.w*d.h-area_i;
+      const iou=(area_i/area_u).toFixed(2);
+      label(ctx,`IoU=${iou}`,ix+2,iy+ih/2+4,t.color,8);
+    }
+  });
+
+  // Cost matrix
+  const mx=W-85, my=10;
+  label(ctx,'Cost matrix [1-IoU]',mx,my+8,'#555570',8);
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){
+    const v=i===j?0.12:0.8;
+    ctx.fillStyle=`rgba(0,217,255,${1-v})`;
+    ctx.fillRect(mx+j*22,my+12+i*18,20,16);
+    ctx.fillStyle=v<0.5?'#00d9ff':'#555570';
+    ctx.font='8px IBM Plex Mono,monospace'; ctx.fillText(v.toFixed(1),mx+j*22+2,my+23+i*18);
+  }
+
+  label(ctx,'Dashed=predicted  Solid=detected',8,H-8,'#555570',8);
+  label(ctx,'Hungarian assigns 1-to-1 optimally',8,H-18,'#ffcc00',8);
+}
+
+// ═══════════════════════════════════════
+// WATERSHED
+// ═══════════════════════════════════════
+let wsStep=0;
+function setWS(s,btn){
+  wsStep=s;
+  document.querySelectorAll('#segmentation .ctrls .btn').forEach(b=>b.classList.remove('act'));
+  btn.classList.add('act');
+  drawWatershed();
+}
+
+function drawWatershed(){
+  const r=setup('c-watershed',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const blobs=[{cx:W*0.25,cy:H*0.4,rx:45,ry:40},{cx:W*0.62,cy:H*0.35,rx:50,ry:35},{cx:W*0.45,cy:H*0.72,rx:40,ry:45}];
+
+  if(wsStep===0){
+    // Gradient image
+    for(let y=0;y<H;y++) for(let x=0;x<W;x+=2){
+      let maxG=0;
+      blobs.forEach(b=>{
+        const d=Math.sqrt(((x-b.cx)/b.rx)**2+((y-b.cy)/b.ry)**2);
+        const g=d>0.7&&d<1.3?Math.exp(-((d-1)**2)/0.05)*200:0;
+        if(g>maxG)maxG=g;
+      });
+      const v=maxG|0;
+      ctx.fillStyle=`rgb(${v*0.4|0},${v*0.8|0},${v|0})`;
+      ctx.fillRect(x,y,2,1);
+    }
+    label(ctx,'GRADIENT MAGNITUDE (ridges = boundaries)',8,H-8,'#555570',8);
+
+  } else if(wsStep===1){
+    // Show markers
+    ctx.fillStyle='#0a0a12'; ctx.fillRect(0,0,W,H);
+    blobs.forEach((b,i)=>{
+      ctx.fillStyle=['#00d9ff','#ff5733','#cc88ff'][i]+'22';
+      ctx.beginPath(); ctx.ellipse(b.cx,b.cy,b.rx*0.6,b.ry*0.6,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=['#00d9ff','#ff5733','#cc88ff'][i];
+      ctx.font='bold 11px IBM Plex Mono'; ctx.fillText(`M${i+1}`,b.cx-8,b.cy+4);
+      ctx.beginPath(); ctx.arc(b.cx,b.cy,6,0,Math.PI*2); ctx.fill();
+    });
+    // Background marker
+    ctx.fillStyle='#555570'; ctx.font='10px IBM Plex Mono';
+    ctx.fillText('BG',10,H-10); ctx.beginPath(); ctx.arc(16,H-20,4,0,Math.PI*2); ctx.fill();
+    label(ctx,'MARKERS: sure_fg (colored) + sure_bg',8,16,'#555570',8);
+
+  } else {
+    // Flooded result
+    ctx.fillStyle='#0a0a12'; ctx.fillRect(0,0,W,H);
+    const iw=W|0,ih=H|0;
+    for(let y=0;y<ih;y++) for(let x=0;x<iw;x++){
+      let minD=Infinity, winI=-1;
+      blobs.forEach((b,i)=>{
+        const d=Math.sqrt(((x-b.cx)/b.rx)**2+((y-b.cy)/b.ry)**2);
+        if(d<minD){minD=d;winI=i;}
+      });
+      if(minD<1.0){
+        const colors=[[0,217,255],[255,87,51],[204,136,255]];
+        const c=colors[winI];
+        ctx.fillStyle=`rgba(${c[0]},${c[1]},${c[2]},${(1-minD)*0.7})`;
+        ctx.fillRect(x,y,1,1);
+      }
+    }
+    // Boundaries (watershed lines)
+    blobs.forEach((b,i)=>{
+      ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.ellipse(b.cx,b.cy,b.rx,b.ry,0,0,Math.PI*2); ctx.stroke();
+    });
+    label(ctx,'WATERSHED BOUNDARIES (white)',8,H-8,'#555570',8);
+  }
+}
+
+// ═══════════════════════════════════════
+// GRABCUT
+// ═══════════════════════════════════════
+function drawGrabCut(){
+  const r=setup('c-grabcut',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Simulate foreground/background separation
+  const cx=W/2,cy=H/2;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x+=2){
+    const d=Math.sqrt(((x-cx)/80)**2+((y-cy)/65)**2);
+    const fg=d<1;
+    if(fg){
+      const h=(Math.atan2(y-cy,x-cx)+Math.PI)/(Math.PI*2);
+      const [rr,gg,bb]=hsvToRgb(h*0.3+0.05,0.6,0.7);
+      ctx.fillStyle=`rgba(${rr|0},${gg|0},${bb|0},0.8)`;
+    } else {
+      ctx.fillStyle=`rgba(20,20,35,${0.5+d*0.1})`;
+    }
+    ctx.fillRect(x,y,2,1);
+  }
+
+  // GrabCut rect
+  ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+  ctx.strokeRect(cx-85,cy-70,170,140);
+  ctx.setLineDash([]);
+  label(ctx,'GrabCut rect',cx-30,cy-72,'#00d9ff',9);
+
+  // Boundary
+  ctx.strokeStyle='#00ff9d'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(cx,cy,80,65,0,0,Math.PI*2); ctx.stroke();
+
+  label(ctx,'FG (GMM model)',cx-25,cy,'#00ff9d',9);
+  label(ctx,'GrabCut: GMM + graph-cut energy minimization',8,H-8,'#555570',8);
+}
+
+function hsvToRgb(h,s,v){
+  const i=Math.floor(h*6),f=h*6-i,p=v*(1-s),q=v*(1-f*s),t=v*(1-(1-f)*s);
+  let rr,gg,bb;
+  switch(i%6){case 0:rr=v;gg=t;bb=p;break;case 1:rr=q;gg=v;bb=p;break;case 2:rr=p;gg=v;bb=t;break;case 3:rr=p;gg=q;bb=v;break;case 4:rr=t;gg=p;bb=v;break;case 5:rr=v;gg=p;bb=q;break;}
+  return [rr*255,gg*255,bb*255];
+}
+
+// ═══════════════════════════════════════
+// CCL
+// ═══════════════════════════════════════
+function drawCCL(){
+  const r=setup('c-ccl',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  const blobs=[
+    {x:30,y:30,w:60,h:50},{x:120,y:20,w:50,h:70},
+    {x:200,y:40,w:80,h:45},{x:30,y:130,w:45,h:60},
+    {x:100,y:120,w:70,h:55},{x:210,y:120,w:55,h:65}
+  ];
+  const colors=['#00d9ff','#ff5733','#cc88ff','#00ff9d','#ffcc00','#ff88cc'];
+
+  blobs.forEach((b,i)=>{
+    ctx.fillStyle=colors[i]+'33'; ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.strokeStyle=colors[i]; ctx.lineWidth=1.5;
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+    // Centroid
+    ctx.fillStyle=colors[i];
+    ctx.beginPath(); ctx.arc(b.x+b.w/2,b.y+b.h/2,4,0,Math.PI*2); ctx.fill();
+    label(ctx,`L${i+1}`,b.x+3,b.y+12,colors[i],9);
+    label(ctx,`A=${b.w*b.h}`,b.x+3,b.y+b.h-4,'#555570',7);
+  });
+
+  label(ctx,`${blobs.length} connected components found`,8,H-8,'#555570',9);
+  label(ctx,'Color = label  A=area  ⊙=centroid',8,H-18,'#00d9ff',8);
+}
+
+// ═══════════════════════════════════════
+// PnP
+// ═══════════════════════════════════════
+function drawPnP(){
+  const r=setup('c-pnp',260); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // 3D coordinate frame (marker)
+  const mx=W*0.25, my=H*0.6;
+  const scale=55;
+
+  // 3D axes projected
+  const axes={
+    x:{dx:scale,dy:-10,color:'#ff5733'},
+    y:{dx:0,dy:-scale,color:'#00ff9d'},
+    z:{dx:-scale*0.5,dy:-scale*0.3,color:'#00d9ff'},
+  };
+  Object.entries(axes).forEach(([name,a])=>{
+    arrow(ctx,mx,my,mx+a.dx,my+a.dy,a.color,2);
+    label(ctx,name.toUpperCase(),mx+a.dx+4,my+a.dy-2,a.color,10);
+  });
+
+  // Object plane (marker)
+  const markerPts=[{x:mx-40,y:my-20},{x:mx+40,y:my-10},{x:mx+45,y:my+20},{x:mx-35,y:my+15}];
+  ctx.fillStyle='rgba(255,204,0,0.08)'; ctx.strokeStyle='#ffcc0066'; ctx.lineWidth=1.5;
+  ctx.beginPath(); markerPts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+
+  // 3D-2D correspondences
+  const objPts=markerPts;
+  const imgPts=[{x:W*0.68,y:my-30},{x:W*0.82,y:my-20},{x:W*0.84,y:my+15},{x:W*0.66,y:my+10}];
+
+  // Camera
+  const cam={x:W*0.82,y:H*0.18};
+  ctx.fillStyle='#ffcc00'; ctx.beginPath(); ctx.arc(cam.x,cam.y,8,0,Math.PI*2); ctx.fill();
+  label(ctx,'Camera',cam.x+10,cam.y,'#ffcc00',9);
+
+  // Frustum to marker
+  imgPts.forEach((p,i)=>{
+    ctx.strokeStyle='rgba(255,204,0,0.2)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cam.x,cam.y); ctx.lineTo(objPts[i].x,objPts[i].y); ctx.stroke();
+  });
+
+  // Image frame
+  ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=1.5;
+  const imgFrame={x:W*0.6,y:H*0.25,w:W*0.3,h:H*0.45};
+  ctx.strokeRect(imgFrame.x,imgFrame.y,imgFrame.w,imgFrame.h);
+  label(ctx,'Image plane',imgFrame.x+5,imgFrame.y-4,'#555570',8);
+
+  // Projected points
+  imgPts.forEach((p,i)=>{
+    ctx.fillStyle='#ff5733'; ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffcc00'; ctx.beginPath(); ctx.arc(objPts[i].x,objPts[i].y,4,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(204,136,255,0.4)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(objPts[i].x,objPts[i].y); ctx.lineTo(p.x,p.y); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Reprojection error arrow
+  const sel=1;
+  ctx.strokeStyle='#00ff9d'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(imgPts[sel].x,imgPts[sel].y,8,0,Math.PI*2); ctx.stroke();
+  label(ctx,'reprojection\nerror minimized',imgPts[sel].x+10,imgPts[sel].y,'#00ff9d',8);
+
+  label(ctx,'solvePnP: find R,t minimizing reprojection error',8,H-8,'#555570',8);
+  label(ctx,'Yellow=3D  Red=projected',8,H-18,'#ffcc00',8);
+}
+
+// ═══════════════════════════════════════
+// ARUCO
+// ═══════════════════════════════════════
+function drawArUco(){
+  const r=setup('c-aruco',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Draw ArUco marker (4x4)
+  const msz=120, mx=W/2-msz/2, my=H/2-msz/2;
+  const bits=[
+    [1,0,1,1],[0,1,0,1],[1,1,0,0],[0,0,1,0]
+  ];
+  const cell=msz/6;
+  ctx.fillStyle='#f0f0f8'; ctx.fillRect(mx,my,msz,msz);
+  ctx.fillStyle='#060608'; ctx.fillRect(mx+cell,my+cell,4*cell,4*cell);
+  for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+    ctx.fillStyle=bits[i][j]?'#f0f0f8':'#060608';
+    ctx.fillRect(mx+cell+j*cell,my+cell+i*cell,cell,cell);
+  }
+
+  // Corner circles
+  const corners=[{x:mx,y:my},{x:mx+msz,y:my},{x:mx+msz,y:my+msz},{x:mx,y:my+msz}];
+  corners.forEach(c=>{
+    ctx.strokeStyle='#00d9ff'; ctx.lineWidth=2; ctx.fillStyle='#00d9ff33';
+    ctx.beginPath(); ctx.arc(c.x,c.y,8,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  });
+
+  // Axis overlay
+  const origin={x:mx+msz/2,y:my+msz/2};
+  arrow(ctx,origin.x,origin.y,origin.x+40,origin.y,'#ff5733',2);
+  arrow(ctx,origin.x,origin.y,origin.x,origin.y-40,'#00ff9d',2);
+  label(ctx,'X',origin.x+42,origin.y+4,'#ff5733',10);
+  label(ctx,'Y',origin.x+3,origin.y-42,'#00ff9d',10);
+
+  label(ctx,'4×4 ArUco ID:23  4 corners → solvePnP',8,H-8,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// ESSENTIAL
+// ═══════════════════════════════════════
+function drawEssential(){
+  const r=setup('c-essential',200); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Two cameras
+  const c1={x:W*0.2,y:H*0.5}, c2={x:W*0.75,y:H*0.5};
+  ctx.fillStyle='#ffcc00';
+  ctx.beginPath(); ctx.arc(c1.x,c1.y,7,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(c2.x,c2.y,7,0,Math.PI*2); ctx.fill();
+  label(ctx,'C1',c1.x-5,c1.y-14,'#ffcc00',9);
+  label(ctx,'C2',c2.x-5,c2.y-14,'#ffcc00',9);
+
+  // Baseline
+  ctx.strokeStyle='rgba(255,204,0,0.3)'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(c1.x,c1.y); ctx.lineTo(c2.x,c2.y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Epipoles
+  label(ctx,'e1',c1.x-5,c1.y+18,'#cc88ff',9);
+  label(ctx,'e2',c2.x-5,c2.y+18,'#cc88ff',9);
+
+  // Matched points
+  const pairs=[{p1:{x:W*0.3,y:H*0.3},p2:{x:W*0.6,y:H*0.35}},{p1:{x:W*0.35,y:H*0.65},p2:{x:W*0.65,y:H*0.68}}];
+  pairs.forEach((p,i)=>{
+    ctx.fillStyle='#00d9ff'; ctx.beginPath(); ctx.arc(p.p1.x,p.p1.y,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ff5733'; ctx.beginPath(); ctx.arc(p.p2.x,p.p2.y,4,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(255,204,0,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(p.p1.x,p.p1.y); ctx.lineTo(p.p2.x,p.p2.y); ctx.stroke();
+    // Epipolar line in right image
+    ctx.strokeStyle='rgba(204,136,255,0.5)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(c2.x+5,p.p2.y-20); ctx.lineTo(c2.x+70,p.p2.y+10); ctx.stroke();
+  });
+
+  label(ctx,'E=KᵀFK  →  R,t via SVD decomposition',8,H-8,'#555570',8);
+  label(ctx,'Blue=left  Red=right  Purple=epipolar lines',8,H-18,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// SLAM
+// ═══════════════════════════════════════
+function drawSLAM(){
+  const r=setup('c-slam',280); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Map background
+  ctx.fillStyle='#0a0a14'; ctx.fillRect(0,0,W,H);
+
+  // Camera trajectory (robot path)
+  const path=[];
+  let px=W*0.15, py=H*0.5, pa=0;
+  for(let i=0;i<60;i++){
+    pa+=0.08;
+    px+=2*Math.cos(pa); py+=1*Math.sin(pa);
+    path.push({x:px,y:py});
+  }
+
+  // Draw path
+  ctx.strokeStyle='rgba(0,217,255,0.4)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); path.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+
+  // Keyframes
+  const keyframes=path.filter((_,i)=>i%8===0);
+  keyframes.forEach(kf=>{
+    ctx.fillStyle='#00d9ff'; ctx.beginPath(); ctx.arc(kf.x,kf.y,4,0,Math.PI*2); ctx.fill();
+  });
+
+  // 3D landmarks
+  for(let i=0;i<60;i++){
+    const lx=20+Math.random()*(W-40), ly=20+Math.random()*(H-40);
+    ctx.fillStyle='rgba(255,204,0,0.4)'; ctx.fillRect(lx-1,ly-1,2,2);
+  }
+
+  // Covisibility graph (edges between nearby keyframes)
+  ctx.strokeStyle='rgba(0,217,255,0.15)'; ctx.lineWidth=1;
+  for(let i=0;i<keyframes.length-1;i++){
+    ctx.beginPath(); ctx.moveTo(keyframes[i].x,keyframes[i].y);
+    ctx.lineTo(keyframes[i+1].x,keyframes[i+1].y); ctx.stroke();
+    if(i>0){
+      ctx.beginPath(); ctx.moveTo(keyframes[i].x,keyframes[i].y);
+      ctx.lineTo(keyframes[i-1].x,keyframes[i-1].y); ctx.stroke();
+    }
+  }
+
+  // Loop closure arrow
+  const lc1=path[5], lc2=path[55];
+  ctx.strokeStyle='#00ff9d'; ctx.lineWidth=2; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(lc1.x,lc1.y); ctx.lineTo(lc2.x,lc2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#00ff9d'; ctx.beginPath(); ctx.arc(lc1.x,lc1.y,7,0,Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(lc2.x,lc2.y,7,0,Math.PI*2); ctx.stroke();
+  label(ctx,'Loop closure!',lc2.x+8,lc2.y+4,'#00ff9d',9);
+
+  // Current position
+  const cur=path[path.length-1];
+  ctx.strokeStyle='#ff5733'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(cur.x,cur.y,10,0,Math.PI*2); ctx.stroke();
+
+  label(ctx,'SLAM MAP  ⊙=keyframes  ·=landmarks  ←loop closure fixes drift',8,H-8,'#555570',8);
+  label(ctx,'Front-end: tracking  Back-end: BA  Loop: BoW recognition',8,16,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// ICP
+// ═══════════════════════════════════════
+function drawICP(){
+  const r=setup('c-icp',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Source cloud (rotated + translated from target)
+  const N=25;
+  const tgt=[];
+  for(let i=0;i<N;i++){
+    const a=i/N*Math.PI*1.5;
+    tgt.push({x:W*0.4+60*Math.cos(a),y:H*0.5+40*Math.sin(a)});
+  }
+
+  // Source = tgt rotated + offset
+  const ang=0.4, tx=40, ty=-20;
+  const src=tgt.map(p=>({
+    x:(p.x-W*0.4)*Math.cos(ang)-(p.y-H*0.5)*Math.sin(ang)+W*0.4+tx,
+    y:(p.x-W*0.4)*Math.sin(ang)+(p.y-H*0.5)*Math.cos(ang)+H*0.5+ty,
+  }));
+
+  // After ICP (approximately aligned)
+  const icpAng=0.05, icpTx=5, icpTy=-3;
+  const aligned=src.map(p=>({
+    x:(p.x-W*0.4)*Math.cos(-ang+icpAng)-(p.y-H*0.5)*Math.sin(-ang+icpAng)+W*0.4+icpTx,
+    y:(p.x-W*0.4)*Math.sin(-ang+icpAng)+(p.y-H*0.5)*Math.cos(-ang+icpAng)+H*0.5+icpTy,
+  }));
+
+  // Draw correspondences
+  src.forEach((s,i)=>{
+    ctx.strokeStyle='rgba(255,204,0,0.2)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(tgt[i].x,tgt[i].y); ctx.stroke();
+  });
+
+  // Draw target
+  tgt.forEach(p=>{ctx.fillStyle='#00d9ff'; ctx.fillRect(p.x-2,p.y-2,4,4);});
+  // Draw source
+  src.forEach(p=>{ctx.fillStyle='#ff573366'; ctx.fillRect(p.x-2,p.y-2,4,4);});
+  // Draw aligned
+  aligned.forEach(p=>{ctx.fillStyle='#00ff9d'; ctx.fillRect(p.x-2,p.y-2,4,4);});
+
+  // Centroids
+  const sc={x:src.reduce((a,p)=>a+p.x,0)/N,y:src.reduce((a,p)=>a+p.y,0)/N};
+  const tc={x:tgt.reduce((a,p)=>a+p.x,0)/N,y:tgt.reduce((a,p)=>a+p.y,0)/N};
+  arrow(ctx,sc.x,sc.y,tc.x,tc.y,'#ffcc00',1.5);
+
+  label(ctx,'Blue=target  Red=source  Green=ICP aligned',8,H-8,'#555570',8);
+  label(ctx,'Yellow=centroid correction  SVD→optimal R,t',8,H-18,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// VISUAL ODOMETRY
+// ═══════════════════════════════════════
+function drawVO(){
+  const r=setup('c-vo',220); if(!r) return;
+  const {ctx,W,H}=r;
+
+  // Two frames
+  const iw=W*0.4|0, ih=H-30;
+
+  ctx.fillStyle='#10101c'; ctx.fillRect(8,15,iw,ih);
+  ctx.fillStyle='#0c0c18'; ctx.fillRect(W-iw-8,15,iw,ih);
+
+  // Scene content (simple geometry)
+  const drawScene=(ox,shift)=>{
+    ctx.strokeStyle='#2a2a3a'; ctx.lineWidth=1;
+    // Horizon
+    ctx.beginPath(); ctx.moveTo(ox,ih*0.4+15); ctx.lineTo(ox+iw,ih*0.4+15); ctx.stroke();
+    // Vertical lines (building edges)
+    [0.2,0.5,0.8].forEach(x=>{
+      ctx.beginPath();
+      ctx.moveTo(ox+x*iw+shift,ih*0.1+15);
+      ctx.lineTo(ox+x*iw+shift,ih*0.4+15); ctx.stroke();
+    });
+  };
+  drawScene(8,0); drawScene(W-iw-8,-8);
+
+  // Feature tracks
+  const feats=[
+    {x:0.2,y:0.2},{x:0.5,y:0.15},{x:0.8,y:0.25},{x:0.3,y:0.35},{x:0.65,y:0.3},{x:0.45,y:0.1}
+  ];
+  feats.forEach(f=>{
+    const x1=8+f.x*iw, y1=15+f.y*ih;
+    const dx=-8*f.x+2, dy=Math.random()*3-1;
+    const x2=W-iw-8+f.x*iw+dx, y2=15+f.y*ih+dy;
+    // Left point
+    ctx.fillStyle='#00d9ff'; ctx.beginPath(); ctx.arc(x1,y1,3,0,Math.PI*2); ctx.fill();
+    // Right point
+    ctx.fillStyle='#ff5733'; ctx.beginPath(); ctx.arc(x2,y2,3,0,Math.PI*2); ctx.fill();
+    // Match line (dashed)
+    ctx.strokeStyle='rgba(255,204,0,0.4)'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Trajectory
+  const tnodes=[];
+  for(let i=0;i<15;i++){tnodes.push({x:W/2+i*2+Math.sin(i*0.5)*8,y:H-15-i*2});}
+  ctx.strokeStyle='rgba(0,217,255,0.5)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); tnodes.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)); ctx.stroke();
+
+  label(ctx,'t',8+iw/2-3,12,'#555570',9); label(ctx,'t+1',W-iw/2-10,12,'#555570',9);
+  label(ctx,'Feature tracks → E matrix → R,t → VO trajectory',8,H-8,'#555570',8);
+}
+
+// ═══════════════════════════════════════
+// DRAW ALL
+// ═══════════════════════════════════════
+function drawAll(){
+  drawHoughLine(); drawHoughCircle(); runRANSAC(); drawShapes();
+  drawPersp(); drawDLT(); drawTransformHier();
+  drawPinhole(); drawDistort(); drawChessboard();
+  drawStereo(); drawSGBM(); drawTriangulate();
+  drawKalman(); drawMeanShift(); drawIoU();
+  drawWatershed(); drawGrabCut(); drawCCL();
+  drawPnP(); drawArUco(); drawEssential();
+  drawSLAM(); drawICP(); drawVO();
+}
+
+window.addEventListener('load', () => {
+  setTimeout(drawAll, 100);
+  // Auto-refresh VO and Kalman animations every few seconds
+  setInterval(()=>{
+    if(document.getElementById('tracking').classList.contains('act')){
+      initKalman(); drawKalman();
+    }
+  }, 3000);
+});
+</script>
+</body>
+</html>
