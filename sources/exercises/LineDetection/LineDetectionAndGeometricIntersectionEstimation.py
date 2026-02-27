@@ -149,6 +149,10 @@ def update_image(*args):
         return np.sqrt((x2-x1)**2 + (y2-y1)**2)
     # Sort longest three [:3] lines, starting from the most longest one
     lines = sorted(lines, key=line_length, reverse=True)[:3]
+    
+    #def line_length(seg):
+    #   x1, y1, x2, y2 = seg[0]
+    #   return np.hypot(x2 - x1, y2 - y1)
 
     # Def list
     slopes_intercepts = []

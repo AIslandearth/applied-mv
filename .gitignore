@@ -1,9 +1,9 @@
 # gitignore
 # python
 
-helpers/
+#helpers/
 video/
 img/
-#aterial-jupyter/
+#material-jupyter/
 
 .vscode
