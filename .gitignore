@@ -4,6 +4,6 @@
 helpers/
 video/
 img/
-material-jupyter/
+#aterial-jupyter/
 
 .vscode
