@@ -19,16 +19,16 @@ import numpy as np
 class Maze:
 
     def __init__(self, gray, threshold=30, step=2):
-        self.gray = gray
+        self.gray      = gray
         self.threshold = threshold
-        self.step = step
-        self.diff_arr = None
-        self.ys = np.array([], dtype=int)
-        self.outers = np.array([], dtype=int)
-        self.inners = np.array([], dtype=int)
-        self.centers = np.array([], dtype=int)
-        self.widths = np.array([], dtype=int)
-        self.corners = None
+        self.step      = step
+        self.diff_arr  = None
+        self.ys        = np.array([], dtype=int)
+        self.outers    = np.array([], dtype=int)
+        self.inners    = np.array([], dtype=int)
+        self.centers   = np.array([], dtype=int)
+        self.widths    = np.array([], dtype=int)
+        self.corners   = None
 
 
     def _build_diff(self):
@@ -40,17 +40,16 @@ class Maze:
             self.gray[self.step:, :].astype(np.int16) -
             self.gray[:-self.step, :].astype(np.int16)
         )
-        diff_x = np.pad(diff_x, ((0,0),(0,self.step)), mode='constant')
-        diff_y = np.pad(diff_y, ((0,self.step),(0,0)), mode='constant')
+        diff_x        = np.pad(diff_x, ((0,0),(0,self.step)), mode='constant')
+        diff_y        = np.pad(diff_y, ((0,self.step),(0,0)), mode='constant')
         self.diff_arr = (np.maximum(diff_x, diff_y) > self.threshold).astype(np.uint8)
 
 
     def _scan_line(self, line):
-        diffs = np.diff(line.astype(np.int8))
+        diffs  = np.diff(line.astype(np.int8))
         starts = np.where(diffs ==  1)[0]
-        ends = np.where(diffs == -1)[0]
-        n = min(len(starts), len(ends))
-        
+        ends   = np.where(diffs == -1)[0]
+        n      = min(len(starts), len(ends))
         if n == 0:
             return None
         outers = starts[:n]
@@ -59,14 +58,11 @@ class Maze:
 
 
     def _find_corners(self):
-        
         if len(self.ys) == 0:
             return None
-        
         points = np.column_stack([self.ys, self.centers])
-        s = points[:, 0] + points[:, 1]
-        d = points[:, 0] - points[:, 1]
-        
+        s      = points[:, 0] + points[:, 1]
+        d      = points[:, 0] - points[:, 1]
         return np.float32([
             [points[s.argmin()][1], points[s.argmin()][0]],
             [points[d.argmin()][1], points[d.argmin()][0]],
@@ -76,11 +72,10 @@ class Maze:
 
 
     def detect(self):
-        
         self._build_diff()
-        
-        h, w = self.diff_arr.shape
-        all_ys = []
+
+        h, w       = self.diff_arr.shape
+        all_ys     = []
         all_outers = []
         all_inners = []
 
@@ -89,10 +84,10 @@ class Maze:
         while y < h:
             result = self._scan_line(self.diff_arr[y, :])
             if result is not None:
-                outers, inners, _, _ = result
-                all_ys.extend([y] * len(outers))
-                all_outers.extend(outers)
-                all_inners.extend(inners)
+                o, i, _, _ = result
+                all_ys.extend([y]  * len(o))
+                all_outers.extend(o)
+                all_inners.extend(i)
             y += 1
 
         # Scan all columns
@@ -100,10 +95,10 @@ class Maze:
         while x < w:
             result = self._scan_line(self.diff_arr[:, x])
             if result is not None:
-                outers, inners, _, _ = result
-                all_ys.extend(outers)
-                all_outers.extend([x] * len(outers))
-                all_inners.extend([x] * len(outers))
+                o, i, _, _ = result
+                all_ys.extend(o)
+                all_outers.extend([x] * len(o))
+                all_inners.extend([x] * len(o))
             x += 1
 
         self.ys      = np.array(all_ys)
