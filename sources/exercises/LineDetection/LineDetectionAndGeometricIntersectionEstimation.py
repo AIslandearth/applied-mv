@@ -88,7 +88,7 @@ def mouse_callback(event, x, y, flags, param):
         x1, y1 = roi_start
         x2, y2 = x, y
         # if mouse movement more than
-        if abs(x2 - x1) > 10 and abs(y2 - y1) > 10:
+        if abs(x2 - x1) > 100 and abs(y2 - y1) > 100:
             ROI = image[min(y1,y2):max(y1,y2), min(x1,x2):max(x1,x2)].copy()
         else:
             ROI = image.copy()
@@ -137,10 +137,10 @@ def update_image(*args):
 #           cv2.line(display, (x1, y1), (x2, y2), (0, 0, 255), 2)
 
     # If no lines detected, show img and and wait 1ms for "rendering", TKinter handles the loop as "main"
-    if lines is None:
-        cv2.imshow("", display)
-        cv2.waitKey(1)
-        return
+    #if lines is None:
+    #    cv2.imshow("", display)
+    #    cv2.waitKey(1)
+    #    return
 
     def line_length(seg):
         # Calc length
@@ -190,7 +190,7 @@ root = tk.Tk()
 root.title("Line detection")
 
 blur_scale = Scale(root, from_=1, to=10, orient=HORIZONTAL, label="Blur size", command=update_image)
-blur_scale.set(1)
+blur_scale.set(7)
 blur_scale.pack()
 
 cv2.namedWindow("Default image")
