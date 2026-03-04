@@ -1194,125 +1194,125 @@ import numpy as np
     
     
 
-class Diff:
+# class Diff:
 
-    def __init__(self, gray, threshold=30, step=2, min_width=2, max_width=50):
-        self.gray      = gray
-        self.threshold = threshold
-        self.step      = step
-        self.min_width = min_width
-        self.max_width = max_width
-        self.ys        = np.array([], dtype=int)
-        self.outers    = np.array([], dtype=int)
-        self.inners    = np.array([], dtype=int)
-        self.centers   = np.array([], dtype=int)
-        self.widths    = np.array([], dtype=int)
-        self.corners   = None
-
-
-    def _build_diff(self):
-        # One pass — difference array H+V combined
-        diff_x = np.abs(
-            self.gray[:, self.step:].astype(np.int16) -
-            self.gray[:, :-self.step].astype(np.int16)
-        )
-        diff_y = np.abs(
-            self.gray[self.step:, :].astype(np.int16) -
-            self.gray[:-self.step, :].astype(np.int16)
-        )
-        diff_x = np.pad(diff_x, ((0,0),(0,self.step)),         mode='constant')
-        diff_y = np.pad(diff_y, ((0,self.step),(0,0)),         mode='constant')
-        return (np.maximum(diff_x, diff_y) > self.threshold).astype(np.uint8)
+#     def __init__(self, gray, threshold=30, step=2, min_width=2, max_width=50):
+#         self.gray      = gray
+#         self.threshold = threshold
+#         self.step      = step
+#         self.min_width = min_width
+#         self.max_width = max_width
+#         self.ys        = np.array([], dtype=int)
+#         self.outers    = np.array([], dtype=int)
+#         self.inners    = np.array([], dtype=int)
+#         self.centers   = np.array([], dtype=int)
+#         self.widths    = np.array([], dtype=int)
+#         self.corners   = None
 
 
-    def _scan_line(self, line):
-        # Rising edge → inner → falling edge → center
-        diffs  = np.diff(line.astype(np.int8))
-        starts = np.where(diffs ==  1)[0]   # rising  edges
-        ends   = np.where(diffs == -1)[0]   # falling edges
-        n      = min(len(starts), len(ends))
-        if n == 0:
-            return None
-        outers  = starts[:n]
-        inners  = ends[:n]
-        centers = (outers + inners) // 2
-        widths  = inners - outers
-        # Width filter
-        mask    = (widths >= self.min_width) & (widths <= self.max_width)
-        if not np.any(mask):
-            return None
-        return outers[mask], inners[mask], centers[mask], widths[mask]
+#     def _build_diff(self):
+#         # One pass — difference array H+V combined
+#         diff_x = np.abs(
+#             self.gray[:, self.step:].astype(np.int16) -
+#             self.gray[:, :-self.step].astype(np.int16)
+#         )
+#         diff_y = np.abs(
+#             self.gray[self.step:, :].astype(np.int16) -
+#             self.gray[:-self.step, :].astype(np.int16)
+#         )
+#         diff_x = np.pad(diff_x, ((0,0),(0,self.step)),         mode='constant')
+#         diff_y = np.pad(diff_y, ((0,self.step),(0,0)),         mode='constant')
+#         return (np.maximum(diff_x, diff_y) > self.threshold).astype(np.uint8)
 
 
-    def _find_corners(self):
-        if len(self.ys) < 4:
-            return None
-        h, w   = self.gray.shape
-        slot_h = max(1, h // 9)
-        slot_w = max(1, w // 9)
-        sy     = np.clip(self.ys      // slot_h, 0, 8)
-        sx     = np.clip(self.centers // slot_w, 0, 8)
-        counts = np.zeros((9, 9), dtype=int)
-        np.add.at(counts, (sy, sx), 1)
-        mask          = counts[sy, sx] >= counts.max() * 0.5
-        ys, centers   = self.ys[mask], self.centers[mask]
-        if len(ys) < 4:
-            return None
-        pts = np.column_stack([ys, centers])
-        s   = pts[:, 0] + pts[:, 1]
-        d   = pts[:, 0] - pts[:, 1]
-        return np.float32([
-            [pts[s.argmin()][1], pts[s.argmin()][0]],
-            [pts[d.argmin()][1], pts[d.argmin()][0]],
-            [pts[s.argmax()][1], pts[s.argmax()][0]],
-            [pts[d.argmax()][1], pts[d.argmax()][0]]
-        ])
+#     def _scan_line(self, line):
+#         # Rising edge → inner → falling edge → center
+#         diffs  = np.diff(line.astype(np.int8))
+#         starts = np.where(diffs ==  1)[0]   # rising  edges
+#         ends   = np.where(diffs == -1)[0]   # falling edges
+#         n      = min(len(starts), len(ends))
+#         if n == 0:
+#             return None
+#         outers  = starts[:n]
+#         inners  = ends[:n]
+#         centers = (outers + inners) // 2
+#         widths  = inners - outers
+#         # Width filter
+#         mask    = (widths >= self.min_width) & (widths <= self.max_width)
+#         if not np.any(mask):
+#             return None
+#         return outers[mask], inners[mask], centers[mask], widths[mask]
 
 
-    def detect(self):
-        diff       = self._build_diff()
-        h          = diff.shape[0]
-        all_ys, all_outers, all_inners = [], [], []
-
-        y = 0
-        while y < h:
-            result = self._scan_line(diff[y, :])
-            if result is not None:
-                o, i, c, w = result
-                all_ys.extend([y]  * len(o))
-                all_outers.extend(o)
-                all_inners.extend(i)
-            y += 1
-
-        self.ys      = np.array(all_ys)
-        self.outers  = np.array(all_outers)
-        self.inners  = np.array(all_inners)
-        self.centers = (self.outers + self.inners) // 2
-        self.widths  = self.inners - self.outers
-        self.corners = self._find_corners()
-        return self
-
-
-    def warp(self, size=500):
-        if self.corners is None:
-            return None
-        dst = np.float32([[0,0],[size,0],[size,size],[0,size]])
-        M   = cv2.getPerspectiveTransform(self.corners, dst)
-        return cv2.warpPerspective(self.gray, M, (size, size))
+#     def _find_corners(self):
+#         if len(self.ys) < 4:
+#             return None
+#         h, w   = self.gray.shape
+#         slot_h = max(1, h // 9)
+#         slot_w = max(1, w // 9)
+#         sy     = np.clip(self.ys      // slot_h, 0, 8)
+#         sx     = np.clip(self.centers // slot_w, 0, 8)
+#         counts = np.zeros((9, 9), dtype=int)
+#         np.add.at(counts, (sy, sx), 1)
+#         mask          = counts[sy, sx] >= counts.max() * 0.5
+#         ys, centers   = self.ys[mask], self.centers[mask]
+#         if len(ys) < 4:
+#             return None
+#         pts = np.column_stack([ys, centers])
+#         s   = pts[:, 0] + pts[:, 1]
+#         d   = pts[:, 0] - pts[:, 1]
+#         return np.float32([
+#             [pts[s.argmin()][1], pts[s.argmin()][0]],
+#             [pts[d.argmin()][1], pts[d.argmin()][0]],
+#             [pts[s.argmax()][1], pts[s.argmax()][0]],
+#             [pts[d.argmax()][1], pts[d.argmax()][0]]
+#         ])
 
 
-    def draw(self, warped=None):
-        source = warped if warped is not None else self.gray
-        output = cv2.cvtColor(source, cv2.COLOR_GRAY2BGR)
-        if len(self.ys) > 0:
-            output[self.ys, self.outers]  = [255,   0,   0]  # blue  = outer
-            output[self.ys, self.inners]  = [  0, 255,   0]  # green = inner
-            output[self.ys, self.centers] = [  0,   0, 255]  # red   = center
-        if self.corners is not None:
-            colors = [[255,0,0],[0,255,255],[0,0,255],[255,0,255]]
-            for i, (cx, cy) in enumerate(self.corners):
-                cv2.circle(output, (int(cx), int(cy)), 8, colors[i], -1)
-        return output
+#     def detect(self):
+#         diff       = self._build_diff()
+#         h          = diff.shape[0]
+#         all_ys, all_outers, all_inners = [], [], []
+
+#         y = 0
+#         while y < h:
+#             result = self._scan_line(diff[y, :])
+#             if result is not None:
+#                 o, i, c, w = result
+#                 all_ys.extend([y]  * len(o))
+#                 all_outers.extend(o)
+#                 all_inners.extend(i)
+#             y += 1
+
+#         self.ys      = np.array(all_ys)
+#         self.outers  = np.array(all_outers)
+#         self.inners  = np.array(all_inners)
+#         self.centers = (self.outers + self.inners) // 2
+#         self.widths  = self.inners - self.outers
+#         self.corners = self._find_corners()
+#         return self
+
+
+#     def warp(self, size=500):
+#         if self.corners is None:
+#             return None
+#         dst = np.float32([[0,0],[size,0],[size,size],[0,size]])
+#         M   = cv2.getPerspectiveTransform(self.corners, dst)
+#         return cv2.warpPerspective(self.gray, M, (size, size))
+
+
+#     def draw(self, warped=None):
+#         source = warped if warped is not None else self.gray
+#         output = cv2.cvtColor(source, cv2.COLOR_GRAY2BGR)
+#         if len(self.ys) > 0:
+#             output[self.ys, self.outers]  = [255,   0,   0]  # blue  = outer
+#             output[self.ys, self.inners]  = [  0, 255,   0]  # green = inner
+#             output[self.ys, self.centers] = [  0,   0, 255]  # red   = center
+#         if self.corners is not None:
+#             colors = [[255,0,0],[0,255,255],[0,0,255],[255,0,255]]
+#             for i, (cx, cy) in enumerate(self.corners):
+#                 cv2.circle(output, (int(cx), int(cy)), 8, colors[i], -1)
+#         return output
     
     
     
