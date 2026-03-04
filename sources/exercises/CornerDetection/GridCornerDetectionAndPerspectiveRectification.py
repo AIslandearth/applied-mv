@@ -6,29 +6,32 @@ import csv
 from CSVWriter import CSVWriter
 from differenceKindOf import Diff
 
-# imgGray = cv2.cvtColor("sources/img/image1_1.png", cv2.COLOR_BGR2GRAY)
-imgGray = cv2.imread("sources/img/image1_1.png", cv2.IMREAD_GRAYSCALE)
+gray = cv2.imread("sources/img/image1_1.png", cv2.IMREAD_GRAYSCALE)
 
-diffArray = Diff(imgGray, 25, 5, 1, 60)
-diffArray.detect()
+diff = Diff(
+        gray,
+        threshold = 20,    # adaptive diff sensitivity
+        step           = 3,     # blur + lookup
+        min_width      = 2,     # grid line min width
+        max_width      = 20,    # grid line max width
+    )
+diff.detect()
 
-imgEdges = diffArray.draw()
-imgWarped = diffArray.warp()
+cv2.imshow("Original with edges", diff.draw())
 
-cv2.imshow("Original", imgGray)
-cv2.imshow("Original with edges", imgEdges)
+warped = diff.warp()
+if warped is not None:
+    diff_warped = Diff(warped,
+                       threshold=30, step=2,
+                       min_width=2,       max_width=30)
+    diff_warped.detect()
+cv2.imshow("Warped", warped)
+cv2.imshow("Warped with edges", diff_warped.draw(warped))
 
-if imgWarped is not None:
-    # Detect again from reoriented picture
-    diffArrayWarped = Diff(imgWarped, 25, 3, 1, 100)
-    diffArrayWarped.detect()
-    imgReoriented = diffArrayWarped.draw()
-    
-cv2.imshow("Warped", imgWarped)
-cv2.imshow("Warped with edges", imgReoriented)
+#writer = CSVWriter(imgGray, "sources/exercises/cornerdetection/diffPixelValues.csv")
 
-# # CSVwriter test
-# #writer = CSVWriter("sources/img/image1_1.png", "sources/exercises/cornerdetection/pixelValues.csv")
+# CSVwriter test
+# writer = CSVWriter("sources/img/image1_1.png", "sources/exercises/cornerdetection/pixelValues.csv")
 # #cv2.imshow("Original", imageOrig)
 # #cv2.imshow("Grayscale", writer.imageGray)
 # #cv2.imshow("Blur", writer.imageBlur)
