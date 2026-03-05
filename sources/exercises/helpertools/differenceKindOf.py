@@ -24,6 +24,226 @@
 import cv2
 import numpy as np
 
+
+#
+# Traditional without numpy vectorized arrays #
+#
+# import cv2
+# import numpy as np
+
+
+# class Diff:
+
+#     def __init__(self, img, diffThreshold=30, step=1, slots=1, slotThreshold=100):
+#         self.img = img if len(img.shape) == 2 else cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+#         self.diffThreshold = diffThreshold
+#         self.step = step
+#         self.slots = slots
+#         self.slotThreshold = slotThreshold * 0.01
+#         self.diff_arr = None
+#         self.ys = []
+#         self.outers = []
+#         self.inners = []
+#         self.centers = []
+#         self.widths = []
+#         self.corners = None
+
+#     def _build_diff(self):
+#         h, w = self.img.shape[:2]
+
+#         self.diff_arr = [[0] * w for _ in range(h)]
+
+#         for y in range(h):
+#             for x in range(self.step, w - self.step):
+#                 dx = int(self.img[y, x + self.step]) - int(self.img[y, x - self.step])
+#                 dy = int(self.img[y + self.step, x]) - int(self.img[y - self.step, x]) if y >= self.step and y < h - self.step else 0
+#                 self.diff_arr[y][x] = max(abs(dx), abs(dy))
+
+#     # def _build_diff(self):
+#     #     h, w = self.img.shape[:2]
+#     #     self.diff_arr = [[0] * w for _ in range(h)]
+
+#     #     for y in range(h):
+#     #         for x in range(w):
+#     #             dx = abs(int(self.img[y, x]) - int(self.img[y, x - self.step])) if x >= self.step else 0
+#     #             dy = abs(int(self.img[y, x]) - int(self.img[y - self.step, x])) if y >= self.step else 0
+#     #             self.diff_arr[y][x] = 1 if max(dx, dy) > self.diffThreshold else 0
+    
+
+#     #def _scan_line(self, row, y):
+#         # w = len(row)
+#         # in_edge = False
+
+#         # for x in range(w):
+#         #     if row[x] == 1 and not in_edge:
+#         #         in_edge = True
+#         #         outer = x
+#         #     elif row[x] == 0 and in_edge:
+#         #         in_edge = False
+#         #         inner = x - 1
+#         #         center = (outer + inner) // 2
+#         #         width = inner - outer
+#         #         self.ys.append(y)
+#         #         self.outers.append(outer)
+#         #         self.inners.append(inner)
+#         #         self.centers.append(center)
+#         #         self.widths.append(width)
+                
+#     def _scan_line(self, y):
+#         w = self.gray.shape[1]
+    
+#         state = 'flat'
+#         rising_start = 0
+#         rising_sum = 0
+#         edge_start = 0
+    
+#         for x in range(self.step, w - self.step):
+#             diff = int(self.gray[y, x + self.step]) - int(self.gray[y, x - self.step])
+        
+#             if state == 'flat':
+#                 if abs(diff) > self.diffThreshold:
+#                     state = 'rising'
+#                     rising_start = x
+#                     rising_sum = abs(diff)
+
+#             elif state == 'rising':
+#                 if abs(diff) > self.diffThreshold:
+#                     rising_sum += abs(diff)
+#                 else:
+#                     # Plateau — we're on the edge now
+#                     state = 'edge'
+#                     edge_start = x
+
+#             elif state == 'edge':
+#                 if abs(diff) > self.diffThreshold:
+#                     # Falling edge detected
+#                     state = 'falling'
+#                     falling_sum = abs(diff)
+#                     falling_start = x
+            
+#             elif state == 'falling':
+#                 if abs(diff) > self.diffThreshold:
+#                     falling_sum += abs(diff)
+#                 else:
+#                     # Edge complete — check symmetry and width
+#                     width = falling_start - rising_start
+#                     balance = abs(rising_sum - falling_sum) / max(rising_sum, falling_sum)
+                
+#                     if balance < 0.3 and width > 3:  # ~symmetric and wide enough
+#                         outer  = rising_start
+#                         inner  = falling_start
+#                         center = (outer + inner) // 2
+#                         self.ys.append(y)
+#                         self.outers.append(outer)
+#                         self.inners.append(inner)
+#                         self.centers.append(center)
+#                         self.widths.append(width)
+                
+#                     # Reset
+#                     state = 'flat'
+#                     rising_sum = 0
+
+
+#     def detect(self):
+        
+#         self._build_diff()
+
+#         self.ys = []
+#         self.outers = []
+#         self.inners = []
+#         self.centers = []
+#         self.widths = []
+
+#         h = len(self.diff_arr)
+#         for y in range(h):
+#             self._scan_line(self.diff_arr[y], y)
+
+#         self.corners = self._find_corners()
+#         return self
+
+
+#     def _find_corners(self):
+#         if len(self.ys) < 4:
+#             return None
+
+#         h, w = self.img.shape
+#         slot_h = h // self.slots
+#         slot_w = w // self.slots
+
+#         # Count edge points per slot
+#         counts = [[0] * self.slots for _ in range(self.slots)]
+#         for i in range(len(self.ys)):
+#             sy = min(self.ys[i] // slot_h, self.slots - 1)
+#             sx = min(self.centers[i] // slot_w, self.slots - 1)
+#             counts[sy][sx] += 1
+
+#         # Find max count across all slots
+#         max_count = max(counts[r][c] for r in range(self.slots) for c in range(self.slots))
+#         if max_count == 0:
+#             return None
+
+#         threshold = max_count * self.slotThreshold
+
+#         # Keep only points in dense slots
+#         dense_ys = []
+#         dense_centers = []
+#         for i in range(len(self.ys)):
+#             sy = min(self.ys[i] // slot_h, self.slots - 1)
+#             sx = min(self.centers[i] // slot_w, self.slots - 1)
+#             if counts[sy][sx] >= threshold:
+#                 dense_ys.append(self.ys[i])
+#                 dense_centers.append(self.centers[i])
+
+#         if len(dense_ys) < 4:
+#             return None
+
+#         # Find the 4 corners using sum/diff heuristic
+#         top_left     = min(range(len(dense_ys)), key=lambda i: dense_ys[i] + dense_centers[i])
+#         top_right    = min(range(len(dense_ys)), key=lambda i: dense_ys[i] - dense_centers[i])
+#         bottom_right = max(range(len(dense_ys)), key=lambda i: dense_ys[i] + dense_centers[i])
+#         bottom_left  = max(range(len(dense_ys)), key=lambda i: dense_ys[i] - dense_centers[i])
+
+#         return np.float32([
+#             [dense_centers[top_left],     dense_ys[top_left]],
+#             [dense_centers[top_right],    dense_ys[top_right]],
+#             [dense_centers[bottom_right], dense_ys[bottom_right]],
+#             [dense_centers[bottom_left],  dense_ys[bottom_left]],
+#         ])
+
+
+#     def warp(self, size=500):
+#         if self.corners is None:
+#             return None
+#         dst = np.float32([[0, 0], [size, 0], [size, size], [0, size]])
+#         M = cv2.getPerspectiveTransform(self.corners, dst)
+#         return cv2.warpPerspective(self.img, M, (size, size))
+
+
+#     # def line_thickness(self, width=5):
+#     #     ys = [self.ys[i] for i in range(len(self.ys)) if self.widths[i] > width]
+#     #     cs = [self.centers[i] for i in range(len(self.ys)) if self.widths[i] > width]
+#     #     return ys, cs
+
+
+#     def draw(self, lineFill=1, cornerFill=5):
+        
+#         imgDraw = cv2.cvtColor(self.img, cv2.COLOR_GRAY2BGR) if len(self.img == 2) else self.img
+        
+#         for i in range(len(self.ys)):
+#             cv2.circle(imgDraw, (self.centers[i], self.ys[i]), lineFill, [0,0,255], -1)
+
+#         if self.corners is not None:
+#             colors = [
+#                 [255, 0, 0],    # Top left blue
+#                 [0, 255, 255],  # Top right yellow
+#                 [0, 255, 0],    # Bottom right green
+#                 [255, 255, 255],  # Bottom left white
+#             ]
+#             for i, (cx, cy) in enumerate(self.corners):
+#                 cv2.circle(imgDraw, (int(cx), int(cy)), 8, colors[i], -1)
+
+#         return imgDraw
+
 class Diff:
 
     def __init__(self, gray, threshold=30, step=2):
