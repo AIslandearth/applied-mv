@@ -17,43 +17,6 @@ DV_BLUR   = 9
 DV_SLOT = 10
 DV_SLOT_THRESHOLD = 5
 
-import cv2
-from findEdges import StepDiff
-from calcCorners import DenseCorners, warpToCorners
-
-cap = cv2.VideoCapture(0)
-
-if not cap.isOpened():
-    print("Camera not accessible")
-    exit()
-
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
-
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
-    dv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
-    dc = DenseCorners(dv)
-
-    edges   = dv.draw()                          # red dots on BGR copy
-    corners = edges.copy()
-    if dc.corners is not None:                   # draw_corners directly here
-        for pt in dc.corners:
-            cv2.circle(corners, (int(pt[0]), int(pt[1])), 10, (255, 255, 255), -1)
-            cv2.circle(corners, (int(pt[0]), int(pt[1])), 10, (0,   0,   0),    2)
-
-    cv2.imshow("Original", frame)
-    cv2.imshow("Edges",    edges)
-    cv2.imshow("Corners",  corners)
-
-    if cv2.waitKey(1) & 0xFF == ord("q"):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
 # img  = cv2.imread("sources/img/image1_1.png")
 # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -100,3 +63,42 @@ cv2.destroyAllWindows()
 # Visualizer(sd, "StepDiff").show_all()
 # Visualizer(dv,   "Derivative").show_all()
 # Visualizer(sd, "StepDiff").export_csv("stepdiff.csv")
+
+
+#RT video
+cap = cv2.VideoCapture(0)
+
+if not cap.isOpened():
+    print("Camera not accessible")
+    exit()
+    
+# Skip frame setup todo
+
+while True:
+    ret, frame = cap.read()
+    
+    if not ret:
+        break
+    
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #gray = cv2.resize(gray, (640, 360))
+
+    dv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
+    dc = DenseCorners(dv)
+
+    edges   = dv.draw()
+    corners = edges.copy()
+    if dc.corners is not None:
+        for pt in dc.corners:
+            cv2.circle(corners, (int(pt[0]), int(pt[1])), 5, (255, 255, 255), -1)
+            cv2.circle(corners, (int(pt[0]), int(pt[1])), 5, (0,   0,   0),    2)
+
+    cv2.imshow("Original", frame)
+    cv2.imshow("Edges", edges)
+    cv2.imshow("Corners", corners)
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
