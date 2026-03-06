@@ -11,54 +11,91 @@ SD_SLOT = 10
 SD_SLOT_THRESHOLD = 30
 
 # Derivative
-DV_THRESH = 3
+DV_THRESH = 5
 DV_STEP   = 1
 DV_BLUR   = 9
 DV_SLOT = 10
-DV_SLOT_THRESHOLD = 10
+DV_SLOT_THRESHOLD = 5
 
-img  = cv2.imread("sources/img/image1_1.png")
-gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+import cv2
+from findEdges import StepDiff
+from calcCorners import DenseCorners, warpToCorners
 
-#sd = StepDiff(gray, SD_THRESH, SD_STEP, SD_SLOT, SD_SLOT_THRESHOLD)
-#dc = DenseCorners(sd)
-dv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
-dc = SimpleCorners(dv)
-dvv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
-dc = DenseCorners(dvv)
-# Original + edges
-edges = dvv.draw()
-dc.draw_corners(edges)
+cap = cv2.VideoCapture(0)
 
-# Warped
-warped = warpToCorners(gray, dc.corners)
-warped_edges = None
+if not cap.isOpened():
+    print("Camera not accessible")
+    exit()
 
-if warped is not None:
-    #sd_warped = StepDiff(warped, SD_THRESH, SD_STEP, SD_SLOT, SD_SLOT_THRESHOLD)
-    #dc_warped = DenseCorners(sd_warped)
-    #warped_edges = sd_warped.draw()
-    #dc_warped.draw_corners(warped_edges)
-    
-    dv_warped = Derivative(warped, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
-    sc_warped = DenseCorners(dv_warped)
-    warped_edges = dv_warped.draw()
-    sc_warped.draw_corners(warped_edges)
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
 
-# Display
-panels = {
-    "original":          cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR),
-    "original + edges":  edges,
-    "warped":            cv2.cvtColor(warped, cv2.COLOR_GRAY2BGR) if warped is not None else None,
-    "warped + edges":    warped_edges,
-}
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-for title, panel in panels.items():
-    if panel is not None:
-        cv2.imshow(title, panel)
+    dv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
+    dc = DenseCorners(dv)
 
-cv2.waitKey(0)
+    edges   = dv.draw()                          # red dots on BGR copy
+    corners = edges.copy()
+    if dc.corners is not None:                   # draw_corners directly here
+        for pt in dc.corners:
+            cv2.circle(corners, (int(pt[0]), int(pt[1])), 10, (255, 255, 255), -1)
+            cv2.circle(corners, (int(pt[0]), int(pt[1])), 10, (0,   0,   0),    2)
+
+    cv2.imshow("Original", frame)
+    cv2.imshow("Edges",    edges)
+    cv2.imshow("Corners",  corners)
+
+    if cv2.waitKey(1) & 0xFF == ord("q"):
+        break
+
+cap.release()
 cv2.destroyAllWindows()
+
+# img  = cv2.imread("sources/img/image1_1.png")
+# gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+# #sd = StepDiff(gray, SD_THRESH, SD_STEP, SD_SLOT, SD_SLOT_THRESHOLD)
+# #dc = DenseCorners(sd)
+# dv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
+# dc = SimpleCorners(dv)
+# dvv = Derivative(gray, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
+# dc = DenseCorners(dvv)
+# # Original + edges
+# edges = dvv.draw()
+# dc.draw_corners(edges)
+
+# # Warped
+# warped = warpToCorners(gray, dc.corners)
+# warped_edges = None
+
+# if warped is not None:
+#     #sd_warped = StepDiff(warped, SD_THRESH, SD_STEP, SD_SLOT, SD_SLOT_THRESHOLD)
+#     #dc_warped = DenseCorners(sd_warped)
+#     #warped_edges = sd_warped.draw()
+#     #dc_warped.draw_corners(warped_edges)
+    
+#     dv_warped = Derivative(warped, DV_THRESH, DV_STEP, DV_BLUR, DV_SLOT, DV_SLOT_THRESHOLD)
+#     sc_warped = DenseCorners(dv_warped)
+#     warped_edges = dv_warped.draw()
+#     sc_warped.draw_corners(warped_edges)
+
+# # Display
+# panels = {
+#     "original":          cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR),
+#     "original + edges":  edges,
+#     "warped":            cv2.cvtColor(warped, cv2.COLOR_GRAY2BGR) if warped is not None else None,
+#     "warped + edges":    warped_edges,
+# }
+
+# for title, panel in panels.items():
+#     if panel is not None:
+#         cv2.imshow(title, panel)
+
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 # Visualizer(sd, "StepDiff").show_all()
 # Visualizer(dv,   "Derivative").show_all()

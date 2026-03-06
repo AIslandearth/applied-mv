@@ -22,12 +22,25 @@ class _CornerBase:
     corners: np.ndarray | None
 
     def __init__(self) -> None:
-        self.corners = None
+        self.corners = np.ndarray | None
+
+    # def draw_corners(self, out: np.ndarray, r: int = 10) -> np.ndarray:
+    #     for pt in (self.corners if self.corners is not None else []):
+    #         cv2.circle(out, (int(pt[0]), int(pt[1])), r, (255,255,255), -1)
+    #         cv2.circle(out, (int(pt[0]), int(pt[1])), r, (0,0,0), 2)
+    #     return out
+    
+    # def draw_corners(self, out: np.ndarray, corners: np.ndarray | None, r: int = 10) -> np.ndarray:
+    #     for pt in (corners if corners is not None else []):
+    #         cv2.circle(out, (int(pt[0]), int(pt[1])), r, (255, 255, 255), -1)
+    #         cv2.circle(out, (int(pt[0]), int(pt[1])), r, (0, 0, 0), 2)
+    #     return out
 
     def draw_corners(self, out: np.ndarray, r: int = 10) -> np.ndarray:
-        for pt in (self.corners if self.corners is not None else []):
-            cv2.circle(out, (int(pt[0]), int(pt[1])), r, (255,255,255), -1)
-            cv2.circle(out, (int(pt[0]), int(pt[1])), r, (0,0,0), 2)
+        if self.corners is not None:
+            for pt in self.corners:
+                cv2.circle(out, (int(pt[0]), int(pt[1])), r, (255, 255, 255), -1)
+                cv2.circle(out, (int(pt[0]), int(pt[1])), r, (0,   0,   0),    2)
         return out
 
     @staticmethod
