@@ -1,7 +1,6 @@
-# ═══════════════════════════════════════════════════════
-# REAL TIME VIDEO
-# ═══════════════════════════════════════════════════════
-
+#
+# Real time video
+#
 def process_video(source=0, use_maze=False):
     cap     = cv2.VideoCapture(source)
     frame_n = 0
@@ -52,9 +51,9 @@ def process_video(source=0, use_maze=False):
     cv2.destroyAllWindows()
 
 
-# ═══════════════════════════════════════════════════════
-# STATIC IMAGE
-# ═══════════════════════════════════════════════════════
+#
+# Static img
+#
 
 def process_static(path, use_maze=False):
     img  = cv2.imread(path)
@@ -80,9 +79,9 @@ def process_static(path, use_maze=False):
     cv2.destroyAllWindows()
 
 
-# ═══════════════════════════════════════════════════════
-# ENTRY POINT
-# ═══════════════════════════════════════════════════════
+#
+# main
+#
 
 if __name__ == "__main__":
 

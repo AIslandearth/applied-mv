@@ -1,9 +1,7 @@
 # gitignore
 # python
 
-#helpers/
 video/
 img/
-#material-jupyter/
-
+/__pycache__
 .vscode

@@ -139,7 +139,7 @@ class Maze:
         # for x in np.unique(self.centers):
         #     cv2.line(output, (x, 0), (x, source.shape[0]), (255,0,0), 1)
             
-        # Vectorized — all at once
+        # Vectorized
         if len(self.ys) > 0:
             output[self.ys, self.outers]  = [255,   0,   0]  # blue  = outer
             output[self.ys, self.inners]  = [  0,   0, 255]  # red   = inner
