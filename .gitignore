@@ -4,6 +4,5 @@
 #helpers/
 video/
 img/
-#material-jupyter/
-
+/__pychache__
 .vscode
