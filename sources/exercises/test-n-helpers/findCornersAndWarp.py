@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-from detectionAndCalcTools import *
+#from detectionAndCalcTools import *
 
 THRESHOLD = 20 # Step difference required for edge detection
 STEP = 3 # Index hop width
@@ -22,7 +22,7 @@ edges = detectEdges(gray, THRESHOLD, STEP, GRAY_VALUE, GRAY_THRESH)
 # Find lines and intersections of the grayscale img
 lines, intersectPoints = findLines(edges, HOUGH_THRESH, MIN_LENGTH, MAX_LINE_GAP)
 # Find corners based on lines intersections found
-corners = findCorners(intersectPoints)
+corners, size = findCorners(intersectPoints)
 
 # Warp the perspective using the detected grid corners as top left, top right, bottom right, bottom left
 warped = warp(img, corners)
