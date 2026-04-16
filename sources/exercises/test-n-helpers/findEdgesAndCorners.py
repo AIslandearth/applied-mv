@@ -1,6 +1,38 @@
 import cv2
 import numpy as np
- 
+
+
+def _mergeLines(lines, slopeThresh=0.1):
+    groups = {}
+    
+    for l in lines:
+        x1,y1,x2,y2 = l[0]
+        if x2 - x1 == 0:
+            slope = np.inf
+        else:
+            slope = np.polyfit((x1,x2), (y1,y2), 1)
+
+        matched = False
+        for key in groups:
+            if abs(key - slope) < slopeThresh:
+                groups[key].append(l[0])
+                matched = True
+                break
+
+        if not matched:
+            groups[slope] = [l[0]]
+    
+    # Only one line for each "group"
+    merged = []
+    for slope, segs in groups.items():
+        segs = np.array(segs)
+        x1 = int(segs[:,0].mean())
+        y1 = int(segs[:,1].mean())
+        x2 = int(segs[:,2].mean())
+        y2 = int(segs[:,3].mean())
+        merged.append(np.array([[x1,y1,x2,y2]]))
+    
+    return np.array(merged) 
 
 # def detectEdges(
 #     gray: np.ndarray,

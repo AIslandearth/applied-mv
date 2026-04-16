@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 def detectEdges(
     gray: np.ndarray,
@@ -67,8 +67,16 @@ def _lineIntersection(line1, line2):
     
     return (int(x1 + theta*(x2-x1)), int(y1 + theta*(y2-y1)))
 
-def _linePoints(edges, lines):
-    # Find all the intersection points
+def _clusterPoints(pts, clusterGrid):
+    
+    keys = (pts // clusterGrid).astype(np.int32)
+    
+    for key in np.unique(keys, axis=0):
+        mask = np.all(keys == key, axis=1)
+        yield pts[mask].mean(axis=0)
+
+def _linePoints(edges, lines, clusterGrid):
+    # Find all intersection points
     h, w = edges.shape
     points = []
     
@@ -77,18 +85,20 @@ def _linePoints(edges, lines):
             pts = _lineIntersection(line1[0], line2[0])
             if pts and 0 <= pts[0] < w and 0 <= pts[1] < h:
                 points.append(pts)
+    #points = np.array(points, dtype=np.float32)
+    
+    pointsFiltered = np.array(list(_clusterPoints(np.array(points, dtype=np.float32), clusterGrid)))
                 
-    return points
+    return pointsFiltered
 
-
-def findLines(edges, threshold, minLength, maxLineGap):
+def findLines(edges, threshold, minLength, maxLineGap, clusterGrid):
     # Find all lines and intersections
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=minLength, maxLineGap=maxLineGap)
     
     if lines is None or len(lines) < 2:
         return None, None
     
-    intersectPoints = np.array(_linePoints(edges, lines), dtype=np.float32)
+    intersectPoints = np.array(_linePoints(edges, lines, clusterGrid), dtype=np.float32)
     
     if len(intersectPoints) < 4:
         return None, None
