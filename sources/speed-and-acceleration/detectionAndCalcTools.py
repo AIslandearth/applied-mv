@@ -17,7 +17,7 @@ def processAndVisualizeObject(cap, frame, threshold, step, ballDiam, hsvMin, hsv
         x, y, r = ball
         # Keep max 30 ball dimensions for calc average, automatically drop the tail
         radiuses = deque(maxlen=30)
-            
+
         radiuses.append(r)
         avgRadius = sum(radiuses) / len(radiuses)
         pxPerMeter = (avgRadius * 2) / ballDiam
@@ -39,10 +39,10 @@ def processAndVisualizeObject(cap, frame, threshold, step, ballDiam, hsvMin, hsv
         
     _drawBall(frame, ball, spd_kmh, acc)
     
-    return spd_kmh, prevPos, prevTime, prevSpd
+    return spd_kmh, prevPos, prevTime, prevSpd, timeStamp
 
 
-def _detectBall(frame, hsvMin, hsvMax, threshold, step, minRadius=14):
+def _detectBall(frame, hsvMin, hsvMax, threshold, step, minRadius=13):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # isolate color range first, then find edges within that mask
@@ -135,6 +135,7 @@ def _fillEdges(edges: np.ndarray, kernelSize: int):
 
     return closed
 
+
 def _lineIntersection(line1, line2):
     # Find the intersection btwn the given lines
     x1, y1, x2, y2 = line1
@@ -148,6 +149,7 @@ def _lineIntersection(line1, line2):
     
     return (int(x1 + theta*(x2-x1)), int(y1 + theta*(y2-y1)))
 
+
 def _clusterPoints(pts, clusterGrid):
     
     keys = (pts // clusterGrid).astype(np.int32)
@@ -155,6 +157,7 @@ def _clusterPoints(pts, clusterGrid):
     for key in np.unique(keys, axis=0):
         mask = np.all(keys == key, axis=1)
         yield pts[mask].mean(axis=0)
+
 
 def _linePoints(edges, lines, clusterGrid):
     # Find all intersection points
@@ -172,6 +175,7 @@ def _linePoints(edges, lines, clusterGrid):
                 
     return pointsFiltered
 
+
 def findLines(edges, threshold, minLength, maxLineGap, clusterGrid):
     # Find all lines and intersections
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=minLength, maxLineGap=maxLineGap)
@@ -185,6 +189,7 @@ def findLines(edges, threshold, minLength, maxLineGap, clusterGrid):
         return None, None
     
     return lines, intersectPoints
+
 
 def findCorners(intersectPoints):
     # Calculate and return cornerpoints using the given (outernmost) intersection points
@@ -221,6 +226,7 @@ def _drawBall(frame, ball, spd_kmh=None, acc=None, color=(0, 255, 0)):
     if acc is not None:
         cv2.putText(frame, f"{acc:.1f} m/s2", (x + r + 5, y + 20),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+
 
 def drawLines(ax, lines, color, linewidth):
     # Draw the detected lines (houghLinesP) for "visualization"

@@ -6,7 +6,7 @@ import time
 from collections import deque
 from detectionAndCalcTools import *
 
-# Tennis ball diameter, ~6.7cm 
+# Tennis ball diameter, ~67mm
 BALL_DIAMETER = 0.067
 
 hsvMin = np.array([25, 100, 100])
@@ -35,20 +35,21 @@ fps = cap.get(cv2.CAP_PROP_FPS)
 # Time to wait per frame
 waitTime_ms = (1000 / fps)
 
-maxSpd = float32 = 0
-spdKmh = float32 = 0
+maxSpd = 0
+spdKmh = 0
 prevPos = None
 prevTime = None
 prevSpd = 0
 radiuses = []
 paused = False
+speedLog = []
 
 while cap.isOpened():
     if not paused:
         ret, frame = cap.read()
         if not ret:
             break
-        spdKmh, prevPos, prevTime, prevSpd = processAndVisualizeObject(cap,
+        spdKmh, prevPos, prevTime, prevSpd, timeStamp = processAndVisualizeObject(cap,
                                                                frame,
                                                                THRESHOLD,
                                                                STEP,
@@ -61,9 +62,13 @@ while cap.isOpened():
                                                                radiuses,
                                                                fps
                                                             )
-        maxSpd = spdKmh if spdKmh is not None and spdKmh > maxSpd else maxSpd
+        if spdKmh is not None:
+            if spdKmh > maxSpd:
+                maxSpd = spdKmh
+                speedLog.append((timeStamp, spdKmh))
+                
         cv2.imshow("Speed and acceleration detector", frame)
-        
+
     key = cv2.waitKey(int(waitTime_ms / 2)) & 0xFF
 
     if key == ord('q'):
@@ -73,7 +78,7 @@ while cap.isOpened():
     elif key == ord('d') and paused:
         ret, frame = cap.read()
         if ret:
-            spdKmh, prevPos, prevSpd, prevTime = processAndVisualizeObject(cap,
+            spdKmh, prevPos, prevSpd, prevTime, timeStamp = processAndVisualizeObject(cap,
                                                                    frame,
                                                                    THRESHOLD,
                                                                    STEP,
@@ -86,15 +91,20 @@ while cap.isOpened():
                                                                    radiuses,
                                                                    fps
                                                                 )
-            maxSpd = spdKmh if spdKmh is not None and spdKmh > maxSpd else maxSpd
+            if spdKmh is not None:
+                if spdKmh > maxSpd:
+                    maxSpd = spdKmh
+                speedLog.append((timeStamp, spdKmh))
+                
             cv2.imshow("Speed and acceleration detector", frame)
+            
     elif key == ord('a') and paused:
         frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
         # -2 to return to previous loop's frame, not current one as proceeded by index already at above
         cap.set(cv2.CAP_PROP_POS_FRAMES, frameNum - 2)
         ret, frame = cap.read()
         if ret:
-            prevPos, prevSpd, prevTime = processAndVisualizeObject(cap,
+            spdKmh, prevPos, prevSpd, prevTime, timeStamp = processAndVisualizeObject(cap,
                                                                    frame,
                                                                    THRESHOLD,
                                                                    STEP,
@@ -107,13 +117,30 @@ while cap.isOpened():
                                                                    radiuses,
                                                                    fps
                                                                 )
-            maxSpd = spdKmh if spdKmh is not None and spdKmh > maxSpd else maxSpd
+            if spdKmh is not None:
+                if spdKmh > maxSpd:
+                    maxSpd = spdKmh
+                speedLog.append((timeStamp, spdKmh))
+                
             cv2.imshow("Speed and acceleration detector", frame)
+    
     #print(maxSpd)
-            
+
 cap.release()
 cv2.destroyAllWindows()
 print(f"Max speed: {maxSpd:.1f} km/h")
+
+if speedLog:
+    times  = [s[0] for s in speedLog]
+    speeds = [s[1] for s in speedLog]
+    maxIndex = speeds.index(max(speeds))
+    
+    fig, ax = plt.subplots()
+    ax.plot(times, speeds)
+    ax.plot(times[maxIndex], speeds[maxIndex], 'ro', markersize=8, label=f"Max: {maxSpd:.1f} km/h at {times[maxIndex]:.2f}s")
+    ax.set(xlabel="Time (s)", ylabel="Speed (km/h)", title=f"Tennis ball speed — max {maxSpd:.1f} km/h")
+    ax.legend()
+    plt.show()
 
 
 
