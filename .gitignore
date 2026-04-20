@@ -3,5 +3,6 @@
 
 video/
 img/
+material-jupyter/
 /__pycache__
 .vscode
