@@ -43,88 +43,49 @@ prevSpd = 0
 radiuses = []
 paused = False
 speedLog = []
+frame = None
+
+def processFrame(cap, frame):
+    global prevPos, prevTime, prevSpd, maxSpd
+
+    spdKmh, prevPos, prevTime, prevSpd, timeStamp = processAndVisualizeObject(
+                                                    cap, frame,
+                                                    THRESHOLD, STEP, BALL_DIAMETER,
+                                                    hsvMin, hsvMax,
+                                                    prevPos, prevSpd, prevTime, radiuses, fps
+    )
+    if spdKmh is not None and spdKmh > maxSpd:
+        maxSpd = spdKmh
+        speedLog.append((timeStamp, spdKmh))
 
 while cap.isOpened():
-    if not paused:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        spdKmh, prevPos, prevTime, prevSpd, timeStamp = processAndVisualizeObject(cap,
-                                                               frame,
-                                                               THRESHOLD,
-                                                               STEP,
-                                                               BALL_DIAMETER,
-                                                               hsvMin,
-                                                               hsvMax,
-                                                               prevPos,
-                                                               prevSpd,
-                                                               prevTime,
-                                                               radiuses,
-                                                               fps
-                                                            )
-        if spdKmh is not None:
-            if spdKmh > maxSpd:
-                maxSpd = spdKmh
-                speedLog.append((timeStamp, spdKmh))
-                
-        cv2.imshow("Speed and acceleration detector", frame)
-
     key = cv2.waitKey(int(waitTime_ms / 2)) & 0xFF
 
     if key == ord('q'):
         break
     elif key == ord(' '):
         paused = not paused
-    elif key == ord('d') and paused:
+
+    if paused:
+        if key == ord('d'):
+            ret, frame = cap.read()
+            if ret:
+                processFrame(cap, frame)
+        elif key == ord('a'):
+            frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+            cap.set(cv2.CAP_PROP_POS_FRAMES, frameNum - 2)
+            ret, frame = cap.read()
+            if ret:
+                prevPos, prevTime, prevSpd = None, None, 0
+                processFrame(cap, frame)
+    else:
         ret, frame = cap.read()
-        if ret:
-            spdKmh, prevPos, prevSpd, prevTime, timeStamp = processAndVisualizeObject(cap,
-                                                                   frame,
-                                                                   THRESHOLD,
-                                                                   STEP,
-                                                                   BALL_DIAMETER,
-                                                                   hsvMin,
-                                                                   hsvMax,
-                                                                   prevPos,
-                                                                   prevSpd,
-                                                                   prevTime,
-                                                                   radiuses,
-                                                                   fps
-                                                                )
-            if spdKmh is not None:
-                if spdKmh > maxSpd:
-                    maxSpd = spdKmh
-                speedLog.append((timeStamp, spdKmh))
-                
-            cv2.imshow("Speed and acceleration detector", frame)
-            
-    elif key == ord('a') and paused:
-        frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-        # -2 to return to previous loop's frame, not current one as proceeded by index already at above
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frameNum - 2)
-        ret, frame = cap.read()
-        if ret:
-            spdKmh, prevPos, prevSpd, prevTime, timeStamp = processAndVisualizeObject(cap,
-                                                                   frame,
-                                                                   THRESHOLD,
-                                                                   STEP,
-                                                                   BALL_DIAMETER,
-                                                                   hsvMin,
-                                                                   hsvMax,
-                                                                   prevPos,
-                                                                   prevSpd,
-                                                                   prevTime,
-                                                                   radiuses,
-                                                                   fps
-                                                                )
-            if spdKmh is not None:
-                if spdKmh > maxSpd:
-                    maxSpd = spdKmh
-                speedLog.append((timeStamp, spdKmh))
-                
-            cv2.imshow("Speed and acceleration detector", frame)
-    
-    #print(maxSpd)
+        if not ret:
+            break
+        processFrame(cap, frame)
+
+    if frame is not None:
+        cv2.imshow("Speed and acceleration detector", frame)
 
 cap.release()
 cv2.destroyAllWindows()
