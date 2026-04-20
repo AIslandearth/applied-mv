@@ -179,44 +179,11 @@ if speedLog:
 # cv2.destroyAllWindows()
 
 
-
-# while cap.isOpened():
-#     if not paused:
-#         ret, frame = cap.read()
-#         # Edge detection todo
-#         frameHsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-#         if not ret:
-#             break
-#         cv2.imshow("Video", frameHsv)
-#         #cv2.imshow("Video", edges)
-#         #cv2.imshow("frame as hsv", frameHsv)
-
-#     key = cv2.waitKey(int(waitTime_ms / 2)) & 0xFF
-
-#     if key == ord('q'):
-#         break
-#     elif key == ord(' '):
-#         paused = not paused
-#     elif key == ord('d') and paused:
-#         ret, frame = cap.read()
-#         if ret:
-#             cv2.imshow("Video", frame)
-#     elif key == ord('a') and paused:
-#         frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-#         # -2 to return to previous loop's frame, not current one as proceeded by index already at above
-#         cap.set(cv2.CAP_PROP_POS_FRAMES, frameNum - 2)
-#         ret, frame = cap.read()
-#         if ret:
-#             cv2.imshow("Video", frame)
-
-# cap.release()
-# cv2.destroyAllWindows()
-
-
-
-
-
-
+#
+#
+# LOOP SCAN AND FPS TESTS
+#
+#
 
 # if not cap.isOpened():
 #     print("Video file not found")
@@ -253,5 +220,6 @@ if speedLog:
 #     #elapsedTotal += cycleTime
 #     #print(cycleTime)
 #     #print(elapsedTotal)
+
 # cap.release()
 # cv2.destroyAllWindows()
