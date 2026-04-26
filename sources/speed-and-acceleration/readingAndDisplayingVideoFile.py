@@ -6,11 +6,14 @@ import time
 from collections import deque
 from detectionAndCalcTools import *
 
-# Tennis ball diameter, ~67mm
+# Tennis ball diameter in meters, ~67mm
 BALL_DIAMETER = 0.067
 
-hsvMin = np.array([25, 100, 100])
-hsvMax = np.array([45, 255, 255])
+# hsvMin = np.array([25, 100, 100])
+# hsvMax = np.array([45, 255, 255])
+
+hsvValues = np.array([40, 180, 180])
+HSV_THRESH = 0.45 # +- Percentage for each channel
 
 QUIT = ord('q')
 KEY_SPACE = ord(' ')
@@ -51,7 +54,7 @@ def processFrame(cap, frame):
     spdKmh, prevPos, prevTime, prevSpd, timeStamp = processAndVisualizeObject(
                                                     cap, frame,
                                                     THRESHOLD, STEP, BALL_DIAMETER,
-                                                    hsvMin, hsvMax,
+                                                    hsvValues, HSV_THRESH,
                                                     prevPos, prevSpd, prevTime, radiuses, fps
     )
     if spdKmh is not None and spdKmh > maxSpd:

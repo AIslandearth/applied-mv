@@ -4,11 +4,11 @@ import numpy as np
 import math
 from collections import deque
 
-def processAndVisualizeObject(cap, frame, threshold, step, ballDiam, hsvMin, hsvMax, prevPos, prevSpd, prevTime, radiuses, fps):
+def processAndVisualizeObject(cap, frame, threshold, step, ballDiam, hsvValues, hsvThresh, prevPos, prevSpd, prevTime, radiuses, fps):
     frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
     timeStamp = frameNum / fps
 
-    ball = _detectBall(frame, hsvMin, hsvMax, threshold, step)
+    ball = _detectBall(frame, hsvValues, hsvThresh, threshold, step)
 
     spd_kmh = None
     acc = None
@@ -31,7 +31,7 @@ def processAndVisualizeObject(cap, frame, threshold, step, ballDiam, hsvMin, hsv
                 spd_ms = dist_m / dt
                 spd_kmh = spd_ms * 3.6
                 # acceleration meters per seconds powered to two
-                acc = (spd_ms - prevSpd) / dt
+                acc = ((spd_ms - prevSpd) / 2) / dt
                 prevSpd = spd_ms
 
         prevPos  = (x, y)
@@ -42,11 +42,11 @@ def processAndVisualizeObject(cap, frame, threshold, step, ballDiam, hsvMin, hsv
     return spd_kmh, prevPos, prevTime, prevSpd, timeStamp
 
 
-def _detectBall(frame, hsvMin, hsvMax, threshold, step, minRadius=13):
+def _detectBall(frame, hsvValues, hsvThresh, threshold, step, minRadius=13):
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
     # isolate color range first, then find edges within that mask
-    color_mask = cv2.inRange(hsv, hsvMin, hsvMax)
+    color_mask = cv2.inRange(hsv, (hsvValues * (1 - hsvThresh)), (hsvValues * (1 + hsvThresh)))
     edges = _detectEdges(color_mask, threshold, step)
 
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
