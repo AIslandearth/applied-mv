@@ -7,7 +7,7 @@ from collections import deque
 from detectionAndCalculation import *
 
 # Tennis ball diameter in meters, ~67mm
-BALL_DIAMETER = 0.067
+BALL_DIAMETER = 0.070
 DEQUE_LENGTH = 5
 
 hsvValues = np.array([40, 180, 180])
