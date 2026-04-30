@@ -2,61 +2,55 @@ import cv2
 import numpy as np
 #import matplotlib.pyplot as plt
 
-#
-# TODO
-#
-def findGridPoints(warpedEdges, minLength, maxLineGap):
-    lines, intersectPoints = findLines(warpedEdges, threshold=80, 
-                                        minLength=minLength, 
-                                        maxLineGap=maxLineGap, 
-                                        clusterGrid=15)
-    return intersectPoints
 
-# Sort into rows and columns
-def sortGridPoints(pts, tolerance=10):
-    pts = pts[np.argsort(pts[:,1])] # Sort by y
-    rows = []
-    row = [pts[0]]
-    
-    for p in pts[1:]:
-        if abs(p[1] - row[0][1]) < tolerance:
-            row.append(p)
-        else:
-            rows.append(sorted(row, key=lambda p: p[0])) # Sort each row by x
-            row = [p]
-    rows.append(sorted(row, key=lambda p: p[0]))
-    
-    return rows # Rows[i][j] = (x,y) of grid point at row i, col j
+def drawGrids(img, gridShape, offset):
+    h, w  = img.shape[:2]
+    # Divide (and trunc) the img onto a desired n of cells
+    cellH = h // gridShape[0]
+    cellW = w // gridShape[1]
+    result = img.copy()
 
-def extractCells(warped, gridPoints):
-    cells = []
-    
-    for i in range(len(gridPoints)-1):
-        row = []
-        for j in range(len(gridPoints[i])-1):
-            # 4 corners of this cell
-            tl = gridPoints[i][j]
-            tr = gridPoints[i][j+1]
-            bl = gridPoints[i+1][j]
-            br = gridPoints[i+1][j+1]
-            
-            x1, y1 = int(tl[0]), int(tl[1])
-            x2, y2 = int(br[0]), int(br[1])
-            
-            cell = warped[y1:y2, x1:x2]
-            row.append(cell)
-        cells.append(row)
-    
-    return cells  # Cells[i][j] = cropped image of cell at row i, col j
+    # Draw the cells onto the img based on top left <-> bottom right with predfined offset
+    for i in range(gridShape[0]):
+        for j in range(gridShape[1]):
+            tl = (j*cellW + offset, i*cellH + offset)
+            br = ((j+1)*cellW - offset, (i+1)*cellH - offset)
+            cv2.rectangle(result, tl, br, (0, 0, 255), 2)
 
-def detectChange(cell1, cell2, threshold=30):
-    diff = cv2.absdiff(cell1, cell2)
+    return result
+
+
+def _detectChange(cellOne, cellTwo, threshold):
+    # If absolute difference greater than threshold -> change detected
+    diff = cv2.absdiff(cellOne, cellTwo)
     return diff.mean() > threshold
 
-#
-# ABOVE TODO
-#
 
+def detectAndDrawChanges(img1, img2, gridShape, threshold, offset):
+    
+    # Slice cells based on total height and width of the img and then divide by n*n cells
+    result = drawGrids(img2, gridShape, offset)
+
+    rows, cols = gridShape
+    h, w = img2.shape[:2]
+    cellH = h // rows
+    cellW = w // cols
+    
+    # Iterate through the cells and detect if change has happened
+    for i in range(rows):
+        for j in range(cols):
+            cell1 = img1[i*cellH:(i+1)*cellH, j*cellW:(j+1)*cellW]
+            cell2 = img2[i*cellH:(i+1)*cellH, j*cellW:(j+1)*cellW]
+
+            # If change above threshold in cell detected, highlight the cell and print cell position 
+            # based on top left <-> right bottom with predefined offset
+            if _detectChange(cell1, cell2, threshold):
+                tl = (j*cellW + offset, i*cellH + offset)
+                br = ((j+1)*cellW - offset, (i+1)*cellH - offset)
+                cv2.rectangle(result, tl, br, (255, 255, 255), 3)
+                print("Change detected in cell [row, col]: [" + str(i + 1) + ", " + str(j + 1) + "]")
+                
+    return result
 
 
 def detectEdges(
@@ -111,6 +105,104 @@ def _fillEdges(edges: np.ndarray, kernel_size: int):
 
     return closed
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# Calculation based cell slicing and detection of changes
+#
+
+# def _partitionGrid(warpedImg, gridShape):
+#     rows, cols = gridShape
+#     h, w = warpedImg.shape[:2]
+#     cellH = h // rows
+#     cellW = w // cols
+
+#     return warpedImg[:rows*cellH, :cols*cellW].reshape(rows, cellH, cols, cellW, -1).transpose(0, 2, 1, 3, 4)
+
+# def detectAndDrawChanges(img1, img2, gridShape, threshold, offset):
+#     cellsOne = _partitionGrid(img1, gridShape)
+#     cellsTwo = _partitionGrid(img2, gridShape)
+#     result = drawGrids(img2, gridShape, offset)
+
+#     rows, cols = gridShape
+#     h, w = img2.shape[:2]
+#     cellH = h // rows
+#     cellW = w // cols
+
+#     diffCells = np.abs(cellsOne.astype(np.int16) - cellsTwo.astype(np.int16)).mean(axis=(2, 3, 4))
+
+#     for i, j in np.argwhere(diffCells > threshold):
+#         tl = (j*cellW + offset, i*cellH + offset)
+#         br = ((j+1)*cellW - offset, (i+1)*cellH - offset)
+#         cv2.rectangle(result, tl, br, (255, 255, 255), 3)
+#         print("Change detected in cell from [row, col]: [" + str(i + 1) + ", " + str(j + 1) + "]")
+               
+#     return result
+
+
+
+#
+# Detect cells based on intersection points and then detect changes in the cells between the given imgs and highlight the changed cells
+#
+# def detectAndDrawChanges(img1, img2, intersectPoints, gridShape, threshold, offset):
+#     rows, cols = gridShape
+#     h, w       = img2.shape[:2]
+#     cellH      = h // rows
+#     cellW      = w // cols
+#     result     = drawGrids(img2, gridShape, offset)
+
+#     # Sort intersection points into grid rows/cols
+#     pts  = np.array(intersectPoints, dtype=np.float32).reshape(-1, 2)
+#     pts  = pts[np.argsort(pts[:, 1])]
+#     ptRows, row = [], [pts[0]]
+#     for p in pts[1:]:
+#         if abs(p[1] - row[0][1]) < cellH * 0.5:
+#             row.append(p)
+#         else:
+#             ptRows.append(sorted(row, key=lambda p: p[0]))
+#             row = [p]
+#     ptRows.append(sorted(row, key=lambda p: p[0]))
+
+#     for i in range(len(ptRows) - 1):
+#         for j in range(len(ptRows[i]) - 1):
+#             if j + 1 >= len(ptRows[i+1]):
+#                 continue
+#             x1, y1 = int(ptRows[i][j][0]),     int(ptRows[i][j][1])
+#             x2, y2 = int(ptRows[i+1][j+1][0]), int(ptRows[i+1][j+1][1])
+
+#             cell1 = img1[y1:y2, x1:x2]
+#             cell2 = img2[y1:y2, x1:x2]
+
+#             if detectChange(cell1, cell2, threshold):
+#                 cv2.rectangle(result, (x1+offset, y1+offset), (x2-offset, y2-offset), (255, 255, 255), 3)
+
+#     return result
+
 def _lineIntersection(line1, line2):
     # Find the intersection btwn the given lines
     x1, y1, x2, y2 = line1
@@ -148,7 +240,7 @@ def _linePoints(edges, lines, clusterGrid):
                 
     return pointsFiltered
 
-def findLines(edges, threshold, minLength, maxLineGap, clusterGrid):
+def findLinesAndIntersectPoints(edges, threshold, minLength, maxLineGap, clusterGrid):
     # Find all lines and intersections
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=minLength, maxLineGap=maxLineGap)
     

@@ -1,3 +1,5 @@
+# Atte Saarimaa 26.04.2026
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,7 +8,7 @@ import time
 from collections import deque
 from detectionAndCalculation import *
 
-# Tennis ball diameter in meters, ~67mm
+# Tennis ball diameter in meters, ~70mm
 BALL_DIAMETER = 0.070
 DEQUE_LENGTH = 5
 
@@ -104,124 +106,3 @@ if speedLog:
     ax.set(xlabel="Time (s)", ylabel="Speed (km/h)", title=f"Tennis ball speed — max {maxSpd:.1f} km/h")
     ax.legend()
     plt.show()
-
-
-
-
-
-
-
-
-#
-#
-# FUNCTIONING ONE BUT WITHOUT PAUSING
-#
-#
-
-# while cap.isOpened():
-#     if not paused:
-#         ret, frame = cap.read()
-#         if not ret:
-#             break
-
-#         frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-#         timeStamp = frameNum / fps
-
-#         ball = detectBall(frame, hsvMin, hsvMax)
-
-#         spd_kmh = None
-#         acc = None
-
-#         if ball:
-#             x, y, r = ball
-#             # Keep max 30 ball dimensions for calc average, automatically drop the tail
-#             radiuses = deque(maxlen=30)
-            
-#             radiuses.append(r)
-#             avgRadius = sum(radiuses) / len(radiuses)
-#             pxPerMeter = (avgRadius * 2) / BALL_DIAMETER_M
-
-#             if prevPos and prevTime:
-#                 px, py = prevPos
-#                 dt = timeStamp - prevTime
-
-#                 if dt > 0:
-#                     dist_m = math.sqrt((x - px)**2 + (y - py)**2) / pxPerMeter
-#                     spd_ms = dist_m / dt
-#                     spd_kmh = spd_ms * 3.6
-#                     # acceleration meters per seconds powered to two
-#                     acc = (spd_ms - prevSpd) / dt
-#                     prevSpd = spd_ms
-
-#             prevPos  = (x, y)
-#             prevTime = timeStamp
-
-#         drawBall(frame, ball, spd_kmh, acc)
-#         cv2.imshow("Speed and acceleration detector", frame)
-        
-#     key = cv2.waitKey(int(waitTime_ms / 2)) & 0xFF
-
-#     if key == ord('q'):
-#         break
-#     elif key == ord(' '):
-#         paused = not paused
-#     elif key == ord('d') and paused:
-#         ret, frame = cap.read()
-#         if ret:
-#             cv2.imshow("Speed and acceleration detector", frame)
-#     elif key == ord('a') and paused:
-#         frameNum = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
-#         # -2 to return to previous loop's frame, not current one as proceeded by index already at above
-#         cap.set(cv2.CAP_PROP_POS_FRAMES, frameNum - 2)
-#         ret, frame = cap.read()
-#         if ret:
-#             cv2.imshow("Speed and acceleration detector", frame)
-
-# cap.release()
-# cv2.destroyAllWindows()
-
-
-#
-#
-# LOOP SCAN AND FPS TESTS
-#
-#
-
-# if not cap.isOpened():
-#     print("Video file not found")
-#     exit()
-
-# # Find fps and frame count for proper playback speed
-# fps = cap.get(cv2.CAP_PROP_FPS)
-# # Count total amount of frames in video
-# #frameCount = cap.get(cv2.CAP_PROP_FRAME_COUNT)
-# # Time to wait per frame
-# waitTime_ms = (1000 / fps)
-
-# print(fps)
-# print(waitTime_ms)
-# #start = 0
-# #elapsedTotal = 0
-
-# frameIndex = 0
-# while cap.isOpened():
-#     #start = time.perf_counter()
-#     ret, frame = cap.read()
-#     if not ret:
-#         break
-#     # Read only every other frame for 60fps -> 30fps as the pc jitter / opencv scan time seems to be the braking factor
-#     if (frameIndex % 2 == 0):
-#         cv2.imshow("Video", frame)
-#     frameIndex += 1
-
-#     # "Set" playback speed via 1000ms / 2 as even the waitTime is calc for 60fps the jitter/scan time messes it
-#     if cv2.waitKey(int(waitTime_ms / 2)) & 0xFF == ord('q'):
-#         break
-    
-#     #cycleTime = time.perf_counter() - start
-#     #elapsedTotal += cycleTime
-#     #print(cycleTime)
-#     #print(elapsedTotal)
-
-# cap.release()
-# cv2.destroyAllWindows()
