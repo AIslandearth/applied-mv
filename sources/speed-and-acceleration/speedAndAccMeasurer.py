@@ -26,7 +26,8 @@ STEP = 2 # Index hop width
 #TARGET_VALUE = 80 # Target color value of the img
 #TARGET_THRESH = 0.13 # Percentage based +- hysteresis of the fixed gray value
 
-cap = cv2.VideoCapture("sources/video/dragSnapShot.mp4")
+# cap = cv2.VideoCapture("sources/video/dragSnapShot.mp4")
+cap = cv2.VideoCapture("sources/speed-and-acceleration/calibration.mp4")
 
 if not cap.isOpened():
     print("Video file not found")
@@ -89,7 +90,7 @@ while cap.isOpened():
         processFrame(cap, frame)
 
     if frame is not None:
-        cv2.imshow("Speed and acceleration detector", frame)
+        cv2.imshow("Speed and acceleration detector", cv2.resize(frame, (int(frame.shape[1] * 0.5), int(frame.shape[0] * 0.5))))
 
 cap.release()
 cv2.destroyAllWindows()
